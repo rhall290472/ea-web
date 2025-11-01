@@ -1,506 +1,449 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulator Engineering Authorizations</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .choice-card {
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .choice-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    .sea-card {
-      transition: 0.2s;
-    }
-
-    .sea-card:hover {
-      background: #f8f9fa;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .parts-table th,
-    .parts-table td,
-    .instr-table th,
-    .instr-table td {
-      vertical-align: middle;
-    }
-
-    .parts-table input,
-    .parts-table textarea,
-    .instr-table input,
-    .instr-table textarea {
-      width: 100%;
-      border: none;
-      padding: 6px;
-    }
-
-    .parts-table .btn-sm,
-    .instr-table .btn-sm {
-      font-size: 0.8rem;
-    }
-
-    .parts-row:hover,
-    .instr-row:hover {
-      background-color: #f8f9fa;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Simulator Engineering Authorizations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .choice-card { cursor: pointer; transition: 0.2s; }
+        .choice-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .sea-card { transition: 0.2s; }
+        .sea-card:hover { background: #f8f9fa; }
+        .hidden { display: none; }
+        .parts-table th, .parts-table td,
+        .instr-table th, .instr-table td { vertical-align: middle; }
+        .parts-table input, .parts-table textarea,
+        .instr-table input, .instr-table textarea { width: 100%; border: none; padding: 6px; }
+        .parts-table .btn-sm, .instr-table .btn-sm { font-size: 0.8rem; }
+        .parts-row:hover, .instr-row:hover { background-color: #f8f9fa; }
+        .select2-container { width: 100% !important; }
+        .select2-container--default .select2-selection--multiple { border: 1px solid #ced4da; border-radius: 0.375rem; padding: 0.375rem 0.75rem; }
+    </style>
 </head>
-
 <body>
-  <div class="container mt-5">
+<div class="container mt-5">
 
     <!-- STEP 1: CHOICE SCREEN -->
     <div id="choiceScreen">
-      <h1 class="text-center mb-5">Simulator Engineering Authorizations</h1>
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="card choice-card h-100 text-center p-4" onclick="showCreateForm()">
-            <div class="card-body d-flex flex-column justify-content-center">
-              <h2 class="text-primary">Create New SEA</h2>
-              <p class="text-muted">Start a fresh engineering authorization</p>
+        <h1 class="text-center mb-5">Simulator Engineering Authorizations</h1>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card choice-card h-100 text-center p-4" onclick="showCreateForm()">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <h2 class="text-primary">Create New SEA</h2>
+                        <p class="text-muted">Start a fresh engineering authorization</p>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card choice-card h-100 text-center p-4" onclick="showSeaList()">
-            <div class="card-body d-flex flex-column justify-content-center">
-              <h2 class="text-success">View / Edit Existing SEA</h2>
-              <p class="text-muted">Search and modify previous submissions</p>
+            <div class="col-md-6">
+                <div class="card choice-card h-100 text-center p-4" onclick="showSeaList()">
+                    <div class="card-body d-flex flex-column justify-content-center">
+                        <h2 class="text-success">View / Edit Existing SEA</h2>
+                        <p class="text-muted">Search and modify previous submissions</p>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
 
     <!-- STEP 2: CREATE / EDIT FORM -->
     <div id="createForm" class="hidden">
-      <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back to Menu</button>
-      <h3 id="formTitle">New Simulator Engineering Authorization (SEA)</h3>
+        <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back to Menu</button>
+        <h3 id="formTitle">New Simulator Engineering Authorization (SEA)</h3>
 
-      <form id="seaForm" action="../src/submit.php" method="POST" enctype="multipart/form-data" class="row g-3">
-        <input type="hidden" name="sea_id" id="sea_id">
-        <input type="hidden" name="action" id="sea_action" value="create">
-        <input type="hidden" name="parts_json" id="parts_json">
-        <input type="hidden" name="instructions_json" id="instructions_json">
+        <form id="seaForm" action="../src/submit.php" method="POST" enctype="multipart/form-data" class="row g-3">
+            <input type="hidden" name="sea_id" id="sea_id">
+            <input type="hidden" name="action" id="sea_action" value="create">
+            <input type="hidden" name="parts_json" id="parts_json">
+            <input type="hidden" name="instructions_json" id="instructions_json">
 
-        <!-- SEA ID -->
-        <div class="col-md-6">
-          <label class="form-label">SEA ID</label>
-          <input type="text" class="form-control" id="display_id" disabled placeholder="Auto-generated">
-        </div>
+            <!-- SEA ID -->
+            <div class="col-md-6">
+                <label class="form-label">SEA ID</label>
+                <input type="text" class="form-control" id="display_id" disabled placeholder="Auto-generated">
+            </div>
 
-        <!-- NEW FIELDS -->
-        <div class="col-md-6">
-          <label for="ea_number" class="form-label">EA#</label>
-          <input type="text" class="form-control" id="ea_number" name="ea_number" placeholder="e.g., EA-2025-001">
-        </div>
+            <!-- NEW FIELDS -->
+            <div class="col-md-6">
+                <label for="ea_number" class="form-label">EA#</label>
+                <input type="text" class="form-control" id="ea_number" name="ea_number" placeholder="e.g., EA-2025-001">
+            </div>
 
-        <div class="col-md-4">
-          <label for="revision" class="form-label">Revision</label>
-          <input type="text" class="form-control" id="revision" name="revision" placeholder="e.g., A, 01">
-        </div>
+            <div class="col-md-4">
+                <label for="revision" class="form-label">Revision</label>
+                <input type="text" class="form-control" id="revision" name="revision" placeholder="e.g., A, 01">
+            </div>
 
-        <div class="col-md-4">
-          <label for="fleet" class="form-label">Fleet <span class="text-danger">*</span></label>
-          <select class="form-select" id="fleet" name="fleet" required>
-            <option value="">Select Fleet</option>
-            <option value="A310">A310</option>
-            <option value="A320">A320</option>
-            <option value="B737-800">B737-800</option>
-            <option value="B737-900">B737-900</option>
-          </select>
-        </div>
+            <div class="col-md-4">
+                <label for="fleet" class="form-label">Fleet <span class="text-danger">*</span></label>
+                <select class="form-select" id="fleet" name="fleet" required>
+                    <option value="">Select Fleet</option>
+                    <option value="A310">A310</option>
+                    <option value="A320">A320</option>
+                    <option value="B737-800">B737-800</option>
+                    <option value="B737-900">B737-900</option>
+                </select>
+            </div>
 
-        <div class="col-md-4">
-          <label for="device" class="form-label">Device</label>
-          <select class="form-select" id="device" name="device" disabled>
-            <option value="">Select Device</option>
-          </select>
-        </div>
+            <!-- MULTI-SELECT DEVICE WITH SELECT2 -->
+            <div class="col-md-4">
+                <label for="device" class="form-label">Device(s)</label>
+                <select class="form-select" id="device" name="device[]" multiple></select>
+                <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+            </div>
 
-        <!-- Requester -->
-        <div class="col-md-6">
-          <label for="requester" class="form-label">Requester <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="requester" name="requester" required>
-        </div>
+            <!-- Requester -->
+            <div class="col-md-6">
+                <label for="requester" class="form-label">Requester <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="requester" name="requester" required>
+            </div>
 
-        <!-- Description -->
-        <div class="col-12">
-          <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
-          <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-        </div>
+            <!-- Description -->
+            <div class="col-12">
+                <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
 
-        <!-- Justification -->
-        <div class="col-12">
-          <label for="justification" class="form-label">Justification / Rationale <span
-              class="text-danger">*</span></label>
-          <textarea class="form-control" id="justification" name="justification" rows="3" required></textarea>
-        </div>
+            <!-- Justification -->
+            <div class="col-12">
+                <label for="justification" class="form-label">Justification / Rationale <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="justification" name="justification" rows="3" required></textarea>
+            </div>
 
-        <!-- PARTS TABLE -->
-        <div class="col-12">
-          <label class="form-label d-flex justify-content-between">
-            <span>Affected Parts / BOM List</span>
-            <button type="button" id="addPartRow" class="btn btn-sm btn-success">+ Add Part</button>
-          </label>
-          <div class="table-responsive">
-            <table class="table table-bordered parts-table" id="partsTable">
-              <thead class="table-light">
-                <tr>
-                  <th style="width:20%">Part Number</th>
-                  <th style="width:35%">Description</th>
-                  <th style="width:25%">Change Type</th>
-                  <th style="width:15%">Qty</th>
-                  <th style="width:5%"></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
+            <!-- PARTS TABLE -->
+            <div class="col-12">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Affected Parts / BOM List</span>
+                    <button type="button" id="addPartRow" class="btn btn-sm btn-success">+ Add Part</button>
+                </label>
+                <div class="table-responsive">
+                    <table class="table table-bordered parts-table" id="partsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:20%">Part Number</th>
+                                <th style="width:35%">Description</th>
+                                <th style="width:25%">Change Type</th>
+                                <th style="width:15%">Qty</th>
+                                <th style="width:5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
-        <!-- Impact -->
-        <div class="col-md-6">
-          <label for="impact" class="form-label">Impact Analysis (Cost, Schedule, Risk)</label>
-          <textarea class="form-control" id="impact" name="impact" rows="3"></textarea>
-        </div>
+            <!-- Impact -->
+            <div class="col-md-6">
+                <label for="impact" class="form-label">Impact Analysis (Cost, Schedule, Risk)</label>
+                <textarea class="form-control" id="impact" name="impact" rows="3"></textarea>
+            </div>
 
-        <!-- Priority -->
-        <div class="col-md-6">
-          <label for="priority" class="form-label">Priority</label>
-          <select class="form-select" id="priority" name="priority">
-            <option value="Low">Low</option>
-            <option value="Medium" selected>Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
+            <!-- Priority -->
+            <div class="col-md-6">
+                <label for="priority" class="form-label">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                </select>
+            </div>
 
-        <!-- Target Date -->
-        <div class="col-md-6">
-          <label for="target_date" class="form-label">Target Implementation Date</label>
-          <input type="date" class="form-control" id="target_date" name="target_date">
-        </div>
+            <!-- Target Date -->
+            <div class="col-md-6">
+                <label for="target_date" class="form-label">Target Implementation Date</label>
+                <input type="date" class="form-control" id="target_date" name="target_date">
+            </div>
 
-        <!-- Attachments -->
-        <div class="col-12">
-          <label for="attachments" class="form-label">Attachments</label>
-          <input type="file" class="form-control" id="attachments" name="attachments[]" multiple>
-        </div>
+            <!-- Attachments -->
+            <div class="col-12">
+                <label for="attachments" class="form-label">Attachments</label>
+                <input type="file" class="form-control" id="attachments" name="attachments[]" multiple>
+            </div>
 
-        <!-- WORK INSTRUCTIONS -->
-        <div class="col-12">
-          <label class="form-label d-flex justify-content-between">
-            <span>Work Instructions</span>
-            <button type="button" id="addInstrRow" class="btn btn-sm btn-success">+ Add Step</button>
-          </label>
-          <div class="table-responsive">
-            <table class="table table-bordered instr-table" id="instrTable">
-              <thead class="table-light">
-                <tr>
-                  <th style="width:8%">#</th>
-                  <th style="width:45%">Instruction</th>
-                  <th style="width:25%">Responsible Party</th>
-                  <th style="width:17%">Notes</th>
-                  <th style="width:5%"></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
+            <!-- WORK INSTRUCTIONS -->
+            <div class="col-12">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Work Instructions</span>
+                    <button type="button" id="addInstrRow" class="btn btn-sm btn-success">+ Add Step</button>
+                </label>
+                <div class="table-responsive">
+                    <table class="table table-bordered instr-table" id="instrTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:8%">#</th>
+                                <th style="width:45%">Instruction</th>
+                                <th style="width:25%">Responsible Party</th>
+                                <th style="width:17%">Notes</th>
+                                <th style="width:5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
 
-        <!-- Submit -->
-        <div class="col-12">
-          <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit SEA</button>
-        </div>
-      </form>
+            <!-- Submit -->
+            <div class="col-12">
+                <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit SEA</button>
+            </div>
+        </form>
     </div>
 
     <!-- STEP 3: SEA LIST -->
     <div id="seaList" class="hidden">
-      <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back to Menu</button>
-      <h3>Existing SEAs</h3>
-      <div class="mb-3">
-        <input type="text" id="searchInput" class="form-control" placeholder="Search by ID, requester, description...">
-      </div>
-      <div id="seaContainer" class="row"></div>
-      <div id="noResults" class="alert alert-info hidden text-center">
-        No SEAs found. <a href="#" onclick="showCreateForm()">Create one</a>.
-      </div>
+        <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back to Menu</button>
+        <h3>Existing SEAs</h3>
+        <div class="mb-3">
+            <input type="text" id="searchInput" class="form-control" placeholder="Search by ID, requester, description...">
+        </div>
+        <div id="seaContainer" class="row"></div>
+        <div id="noResults" class="alert alert-info hidden text-center">
+            No SEAs found. <a href="#" onclick="showCreateForm()">Create one</a>.
+        </div>
     </div>
-  </div>
+</div>
 
-  <script>
-    // === FLEET → DEVICE FILTER ===
-    const fleetDeviceMap = {
-      'A310': ['210'],
-      'A320': ['N/A'],
-      'B737-800': ['587'],
-      'B737-900': ['N/A']
-    };
+<!-- Bootstrap + Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    document.getElementById('fleet').addEventListener('change', function () {
-      const fleet = this.value;
-      const deviceSelect = document.getElementById('device');
-      deviceSelect.innerHTML = '<option value="">Select Device</option>';
-      deviceSelect.disabled = true;
+<script>
+// === FLEET → MULTI-DEVICE MAPPING ===
+const fleetDeviceMap = {
+    'A310': ['210'],
+    'A320': ['N/A'],
+    'B737-800': ['587', '588', '589'],
+    'B737-900': ['N/A', '590']
+};
 
-      if (fleet && fleetDeviceMap[fleet]) {
-        fleetDeviceMap[fleet].forEach(dev => {
-          const opt = document.createElement('option');
-          opt.value = dev;
-          opt.textContent = dev;
-          deviceSelect.appendChild(opt);
-        });
-        deviceSelect.disabled = false;
-      }
-    });
+// === INITIALIZE SELECT2 ON DEVICE ===
+$('#device').select2({
+    placeholder: "Select one or more devices",
+    allowClear: true,
+    width: '100%'
+});
 
-    // === LOAD EXISTING DATA (EDIT MODE) ===
-    function loadExistingData(data) {
-      document.getElementById('ea_number').value = data.ea_number || '';
-      document.getElementById('revision').value = data.revision || '';
-      document.getElementById('fleet').value = data.fleet || '';
-      // Trigger device update
-      document.getElementById('fleet').dispatchEvent(new Event('change'));
-      setTimeout(() => {
-        document.getElementById('device').value = data.device || '';
-      }, 100);
+// === FLEET CHANGE → UPDATE DEVICE OPTIONS ===
+document.getElementById('fleet').addEventListener('change', function() {
+    const fleet = this.value;
+    const $device = $('#device');
+    $device.empty();
+
+    if (fleet && fleetDeviceMap[fleet]) {
+        const options = fleetDeviceMap[fleet].map(dev => ({ id: dev, text: dev }));
+        $device.select2({ data: options });
+    } else {
+        $device.select2({ data: [] });
     }
+    $device.val(null).trigger('change');
+});
 
-    // Update editSea() to include new fields
-    function editSea(id) {
-      showCreateForm();
-      document.getElementById('sea_action').value = 'update';
-      document.getElementById('sea_id').value = id;
-      document.getElementById('display_id').value = id;
-      document.getElementById('formTitle').textContent = 'Edit SEA – ' + id;
-      document.getElementById('submitBtn').textContent = 'Update SEA';
+// === NAVIGATION ===
+function showCreateForm() {
+    hideAll();
+    document.getElementById('createForm').classList.remove('hidden');
+    document.getElementById('seaForm').reset();
+    document.getElementById('sea_id').value = '';
+    document.getElementById('sea_action').value = 'create';
+    document.getElementById('display_id').value = '';
+    document.getElementById('formTitle').textContent = 'New Simulator Engineering Authorization (SEA)';
+    document.getElementById('submitBtn').textContent = 'Submit SEA';
+    document.querySelectorAll('#partsTable tbody, #instrTable tbody').forEach(t => t.innerHTML = '');
+    addPartRow();
+    addInstrRow();
+    $('#device').val(null).trigger('change');
+}
 
-      fetch(`data/sea-${encodeURIComponent(id)}.json`)
-        .then(r => r.json())
-        .then(data => {
-          document.getElementById('requester').value = data.requester || '';
-          document.getElementById('description').value = data.description || '';
-          document.getElementById('justification').value = data.justification || '';
-          document.getElementById('impact').value = data.impact || '';
-          document.getElementById('priority').value = data.priority || 'Medium';
-          document.getElementById('target_date').value = data.target_date || '';
+function showSeaList() {
+    hideAll();
+    document.getElementById('seaList').classList.remove('hidden');
+    loadSeaList();
+}
 
-          // NEW: Load EA#, Rev, Fleet, Device
-          loadExistingData(data);
+function goBack() {
+    hideAll();
+    document.getElementById('choiceScreen').classList.remove('hidden');
+}
 
-          // Load tables
-          document.querySelector('#partsTable tbody').innerHTML = '';
-          JSON.parse(data.parts_json || '[]').forEach(p => addPartRow(p));
-          document.querySelector('#instrTable tbody').innerHTML = '';
-          stepCounter = 1;
-          JSON.parse(data.instructions_json || '[]').forEach(i => addInstrRow(i));
-        })
-        .catch(err => alert('Failed to load: ' + err.message));
-    }
+function hideAll() {
+    document.querySelectorAll('#choiceScreen, #createForm, #seaList').forEach(el => el.classList.add('hidden'));
+}
 
-    // === NAVIGATION ===
-    function showCreateForm() {
-      hideAll();
-      document.getElementById('createForm').classList.remove('hidden');
-      document.getElementById('seaForm').reset();
-      document.getElementById('sea_id').value = '';
-      document.getElementById('sea_action').value = 'create';
-      document.getElementById('display_id').value = '';
-      document.getElementById('formTitle').textContent = 'New Simulator Engineering Authorization (SEA)';
-      document.getElementById('submitBtn').textContent = 'Submit SEA';
-      document.querySelectorAll('#partsTable tbody, #instrTable tbody').forEach(t => t.innerHTML = '');
-      addPartRow();
-      addInstrRow();
-    }
+// === TABLE LOGIC ===
+let stepCounter = 1;
 
-    function showSeaList() {
-      hideAll();
-      document.getElementById('seaList').classList.remove('hidden');
-      loadSeaList();
-    }
-
-    function goBack() {
-      hideAll();
-      document.getElementById('choiceScreen').classList.remove('hidden');
-    }
-
-    function hideAll() {
-      document.querySelectorAll('#choiceScreen, #createForm, #seaList').forEach(el => el.classList.add('hidden'));
-    }
-
-    // === TABLE LOGIC ===
-    let stepCounter = 1;
-
-    function addPartRow(data = {}) {
-      const tbody = document.querySelector('#partsTable tbody');
-      const row = document.createElement('tr');
-      row.className = 'parts-row';
-      row.innerHTML = `
+function addPartRow(data = {}) {
+    const tbody = document.querySelector('#partsTable tbody');
+    const row = document.createElement('tr');
+    row.className = 'parts-row';
+    row.innerHTML = `
         <td><input type="text" class="part-number" value="${h(data.part || '')}" placeholder="P-123"></td>
         <td><textarea class="part-desc" rows="1">${h(data.desc || '')}</textarea></td>
         <td>
             <select class="form-select form-select-sm change-type">
-                ${['Modify', 'Add', 'Remove', 'Replace'].map(o => `<option value="${o}" ${o === data.type ? 'selected' : ''}>${o}</option>`).join('')}
+                ${['Modify','Add','Remove','Replace'].map(o => `<option value="${o}" ${o===data.type?'selected':''}>${o}</option>`).join('')}
             </select>
         </td>
         <td><input type="number" class="part-qty text-center" min="1" value="${data.qty || 1}" style="width:60px"></td>
         <td><button type="button" class="btn btn-sm btn-danger delete-row">Trash</button></td>
     `;
-      tbody.appendChild(row);
-      updatePartsJson();
-    }
+    tbody.appendChild(row);
+    updatePartsJson();
+}
 
-    function addInstrRow(data = {}) {
-      const tbody = document.querySelector('#instrTable tbody');
-      const row = document.createElement('tr');
-      row.className = 'instr-row';
-      row.innerHTML = `
+function addInstrRow(data = {}) {
+    const tbody = document.querySelector('#instrTable tbody');
+    const row = document.createElement('tr');
+    row.className = 'instr-row';
+    row.innerHTML = `
         <td class="text-center fw-bold">${stepCounter++}</td>
         <td><textarea class="instr-text" rows="2" placeholder="Remove old part">${h(data.instruction || '')}</textarea></td>
         <td><input type="text" class="instr-party" value="${h(data.party || '')}" placeholder="Technician A"></td>
         <td><input type="text" class="instr-notes" value="${h(data.notes || '')}" placeholder="Use torque wrench"></td>
         <td><button type="button" class="btn btn-sm btn-danger delete-row">Trash</button></td>
     `;
-      tbody.appendChild(row);
-      updateInstrJson();
-    }
+    tbody.appendChild(row);
+    updateInstrJson();
+}
 
-    // Delete rows
-    document.addEventListener('click', e => {
-      if (e.target.classList.contains('delete-row')) {
+document.addEventListener('click', e => {
+    if (e.target.classList.contains('delete-row')) {
         e.target.closest('tr').remove();
         updatePartsJson();
         updateInstrJson();
         renumberSteps();
-      }
-    });
+    }
+});
 
-    function updatePartsJson() {
-      const rows = document.querySelectorAll('#partsTable tbody tr');
-      const parts = Array.from(rows).map(r => ({
+function updatePartsJson() {
+    const rows = document.querySelectorAll('#partsTable tbody tr');
+    const parts = Array.from(rows).map(r => ({
         part: r.querySelector('.part-number').value.trim(),
         desc: r.querySelector('.part-desc').value.trim(),
         type: r.querySelector('.change-type').value,
         qty: r.querySelector('.part-qty').value || '1'
-      })).filter(p => p.part || p.desc);
-      document.getElementById('parts_json').value = JSON.stringify(parts);
-    }
+    })).filter(p => p.part || p.desc);
+    document.getElementById('parts_json').value = JSON.stringify(parts);
+}
 
-    function updateInstrJson() {
-      const rows = document.querySelectorAll('#instrTable tbody tr');
-      const instr = Array.from(rows).map(r => ({
+function updateInstrJson() {
+    const rows = document.querySelectorAll('#instrTable tbody tr');
+    const instr = Array.from(rows).map(r => ({
         instruction: r.querySelector('.instr-text').value.trim(),
         party: r.querySelector('.instr-party').value.trim(),
         notes: r.querySelector('.instr-notes').value.trim()
-      })).filter(i => i.instruction);
-      document.getElementById('instructions_json').value = JSON.stringify(instr);
-    }
+    })).filter(i => i.instruction);
+    document.getElementById('instructions_json').value = JSON.stringify(instr);
+}
 
-    function renumberSteps() {
-      stepCounter = 1;
-      document.querySelectorAll('#instrTable tbody tr td:first-child').forEach(td => td.textContent = stepCounter++);
-    }
+function renumberSteps() {
+    stepCounter = 1;
+    document.querySelectorAll('#instrTable tbody tr td:first-child').forEach(td => td.textContent = stepCounter++);
+}
 
-    // Add row buttons
-    document.getElementById('addPartRow').addEventListener('click', () => addPartRow());
-    document.getElementById('addInstrRow').addEventListener('click', () => addInstrRow());
+document.getElementById('addPartRow').addEventListener('click', () => addPartRow());
+document.getElementById('addInstrRow').addEventListener('click', () => addInstrRow());
+document.getElementById('seaForm').addEventListener('input', () => {
+    updatePartsJson();
+    updateInstrJson();
+});
 
-    // Update JSON on input
-    document.getElementById('seaForm').addEventListener('input', () => {
-      updatePartsJson();
-      updateInstrJson();
-    });
+// === LOAD SEA LIST ===
+function loadSeaList() {
+    const container = document.getElementById('seaContainer');
+    container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
 
-    // === LOAD SEA LIST ===
-    function loadSeaList() {
-      fetch('../src/list_seas.php')
-        .then(r => r.json())
+    fetch('../src/list_seas.php')
+        .then(r => r.ok ? r.json() : Promise.reject(`HTTP ${r.status}`))
         .then(seas => {
-          const container = document.getElementById('seaContainer');
-          container.innerHTML = '';
-          if (seas.length === 0) {
-            document.getElementById('noResults').classList.remove('hidden');
-            return;
-          }
-          seas.forEach(s => {
-            const col = document.createElement('div');
-            col.className = 'col-md-6 mb-3';
-            col.innerHTML = `
+            container.innerHTML = '';
+            if (!seas.length) {
+                document.getElementById('noResults').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('noResults').classList.add('hidden');
+            seas.forEach(s => {
+                const col = document.createElement('div');
+                col.className = 'col-md-6 mb-3';
+                col.innerHTML = `
                     <div class="card sea-card h-100">
                         <div class="card-body">
                             <h5>${h(s.id)}</h5>
-                            <p><strong>Requester:</strong> ${h(s.requester)}</p>
-                            <p><strong>Desc:</strong> ${h(s.description.substring(0, 80))}${s.description.length > 80 ? '...' : ''}</p>
-                            <p class="text-muted small">${h(s.timestamp)} | v${s.version}</p>
-                            <button class="btn btn-sm btn-primary" onclick="editSea('${s.id}')">Edit</button>
-                            <a href="src/print_sea.php?id=${s.id}" class="btn btn-sm btn-success" target="_blank">Print PDF</a>
+                            <p class="mb-1"><strong>EA#:</strong> ${h(s.ea_number || '—')}</p>
+                            <p class="mb-1"><strong>Fleet:</strong> ${h(s.fleet || '—')} | <strong>Device:</strong> ${h(Array.isArray(s.device) ? s.device.join(', ') : s.device || '—')}</p>
+                            <p class="mb-1"><strong>Requester:</strong> ${h(s.requester)}</p>
+                            <p class="mb-0 text-muted small">${h(s.timestamp)} | v${s.version}</p>
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-primary me-1" onclick="editSea('${s.id}')">Edit</button>
+                                <a href="../src/print_sea.php?id=${s.id}" class="btn btn-sm btn-success" target="_blank">Print PDF</a>
+                            </div>
                         </div>
                     </div>
                 `;
-            container.appendChild(col);
-          });
+                container.appendChild(col);
+            });
+        })
+        .catch(err => {
+            container.innerHTML = `<div class="alert alert-danger">Error: ${err}</div>`;
         });
-    }
+}
 
-    // === EDIT SEA ===
-    function editSea(id) {
-      showCreateForm();
-      document.getElementById('sea_action').value = 'update';
-      document.getElementById('sea_id').value = id;
-      document.getElementById('display_id').value = id;
-      document.getElementById('formTitle').textContent = 'Edit SEA – ' + id;
-      document.getElementById('submitBtn').textContent = 'Update SEA';
+// === EDIT SEA ===
+function editSea(id) {
+    showCreateForm();
+    document.getElementById('sea_action').value = 'update';
+    document.getElementById('sea_id').value = id;
+    document.getElementById('display_id').value = id;
+    document.getElementById('formTitle').textContent = 'Edit SEA – ' + id;
+    document.getElementById('submitBtn').textContent = 'Update SEA';
 
-      fetch(`../data/sea-${id}.json`)
+    fetch(`../data/sea-${id}.json`)
         .then(r => r.json())
         .then(data => {
-          document.getElementById('requester').value = data.requester || '';
-          document.getElementById('description').value = data.description || '';
-          document.getElementById('justification').value = data.justification || '';
-          document.getElementById('impact').value = data.impact || '';
-          document.getElementById('priority').value = data.priority || 'Medium';
-          document.getElementById('target_date').value = data.target_date || '';
+            document.getElementById('ea_number').value = data.ea_number || '';
+            document.getElementById('revision').value = data.revision || '';
+            document.getElementById('requester').value = data.requester || '';
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('justification').value = data.justification || '';
+            document.getElementById('impact').value = data.impact || '';
+            document.getElementById('priority').value = data.priority || 'Medium';
+            document.getElementById('target_date').value = data.target_date || '';
 
-          // Load tables
-          document.querySelector('#partsTable tbody').innerHTML = '';
-          JSON.parse(data.parts_json || '[]').forEach(p => addPartRow(p));
-          document.querySelector('#instrTable tbody').innerHTML = '';
-          stepCounter = 1;
-          JSON.parse(data.instructions_json || '[]').forEach(i => addInstrRow(i));
+            // Load Fleet & Devices
+            document.getElementById('fleet').value = data.fleet || '';
+            document.getElementById('fleet').dispatchEvent(new Event('change'));
+            setTimeout(() => {
+                const savedDevices = Array.isArray(data.device) ? data.device : (data.device ? [data.device] : []);
+                $('#device').val(savedDevices).trigger('change');
+            }, 100);
+
+            // Load tables
+            document.querySelector('#partsTable tbody').innerHTML = '';
+            JSON.parse(data.parts_json || '[]').forEach(p => addPartRow(p));
+            document.querySelector('#instrTable tbody').innerHTML = '';
+            stepCounter = 1;
+            JSON.parse(data.instructions_json || '[]').forEach(i => addInstrRow(i));
         });
-    }
+}
 
-    // Search
-    document.getElementById('searchInput')?.addEventListener('input', function () {
-      const term = this.value.toLowerCase();
-      document.querySelectorAll('.sea-card').forEach(card => {
+// === SEARCH ===
+document.getElementById('searchInput')?.addEventListener('input', function() {
+    const term = this.value.toLowerCase();
+    document.querySelectorAll('.sea-card').forEach(card => {
         const text = card.textContent.toLowerCase();
         card.closest('.col-md-6').style.display = text.includes(term) ? '' : 'none';
-      });
     });
+});
 
-    function h(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function h(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
-    // Init
-    hideAll();
-    document.getElementById('choiceScreen').classList.remove('hidden');
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+// Init
+hideAll();
+document.getElementById('choiceScreen').classList.remove('hidden');
+</script>
 </body>
-
 </html>

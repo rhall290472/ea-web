@@ -38,7 +38,7 @@ $sea = [
   'ea_number'  => $_POST['ea_number'] ?? $existing['ea_number'] ?? '',
   'revision'   => $_POST['revision'] ?? $existing['revision'] ?? '',
   'fleet'      => $_POST['fleet'] ?? $existing['fleet'] ?? '',
-  'device'     => $_POST['device'] ?? $existing['device'] ?? '',
+  'device' => is_array($_POST['device']) ? array_filter($_POST['device']) : []
 ];
 
 // === HANDLE FILE UPLOADS ===
@@ -105,7 +105,9 @@ $html = '
 <p><span class="label">EA#:</span> ' . h($sea['ea_number']) . '</p>
 <p><span class="label">Revision:</span> ' . h($sea['revision']) . '</p>
 <p><span class="label">Fleet:</span> ' . h($sea['fleet']) . '</p>
-<p><span class="label">Device:</span> ' . h($sea['device']) . '</p>
+<p><span class="label">Device(s):</span> 
+    <?= h(is_array($sea['device']) ? implode(', ', $sea['device']) : $sea['device']) ?>
+</p>
 <p><span class="label">Requester:</span> ' . h($sea['requester']) . '</p>
 <p><span class="label">Description:</span> ' . nl2br(h($sea['description'])) . '</p>
 <p><span class="label">Justification:</span> ' . nl2br(h($sea['justification'])) . '</p>
