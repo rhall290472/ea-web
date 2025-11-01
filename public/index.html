@@ -137,7 +137,7 @@
 // ============== FLEET → DEVICES ==============
 const fleetDeviceMap = {
     'A320'     : ['210'],
-    'B737-NG'  : [],
+    'B737-NG'  : ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4'] ,
     'B737-MAX' : ['587','588','589'],
     'B757'     : [],
     'B767'     : [],
@@ -150,29 +150,39 @@ function rebuildDeviceSelect() {
     const $dev  = $('#device');
     const $col  = $('#deviceCol');
 
-    // 1. Destroy old Select2
-    if ($dev.hasClass('select2-hidden-accessible')) $dev.select2('destroy');
+    // Destroy existing
+    if ($dev.hasClass('select2-hidden-accessible')) {
+        $dev.select2('destroy');
+    }
     $dev.empty();
 
     const devices = fleetDeviceMap[fleet] || [];
 
     if (devices.length) {
+        $col.show(); // FORCE visible
         devices.forEach(d => $dev.append(`<option value="${d}">${d}</option>`));
-        $col.show();
     } else {
         $col.hide();
+        $dev.append('<option></option>');
     }
 
-    // 2. Re-create Select2
+    // Re-init
     $dev.select2({
         placeholder: devices.length ? 'Select device(s)' : 'No devices',
         allowClear: true,
         width: '100%'
     });
 
+    // Force render if needed
+    if (devices.length > 5) {
+        setTimeout(() => {
+            $dev.select2('open');
+            $dev.select2('close');
+        }, 100);
+    }
+
     $dev.val(null).trigger('change');
 }
-
 document.getElementById('fleet').addEventListener('change', rebuildDeviceSelect);
 
 // ============== NAVIGATION ==============
