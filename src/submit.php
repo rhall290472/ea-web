@@ -105,16 +105,13 @@ $html = '
 <p><span class="label">EA#:</span> ' . h($sea['ea_number']) . '</p>
 <p><span class="label">Revision:</span> ' . h($sea['revision']) . '</p>
 <p><span class="label">Fleet:</span> ' . h($sea['fleet']) . '</p>
-<p><span class="label">Device(s):</span> 
-    <?= h(is_array($sea['device']) ? implode(', ', $sea['device']) : $sea['device']) ?>
-</p>
+<p><span class="label">Device(s):</span> ' . h(is_array($sea['device']) ? implode(', ', $sea['device']) : ($sea['device'] ?? '')) . '</p>
 <p><span class="label">Requester:</span> ' . h($sea['requester']) . '</p>
 <p><span class="label">Description:</span> ' . nl2br(h($sea['description'])) . '</p>
 <p><span class="label">Justification:</span> ' . nl2br(h($sea['justification'])) . '</p>
 <p><span class="label">Impact:</span> ' . nl2br(h($sea['impact'])) . '</p>
 <p><span class="label">Priority:</span> ' . h($sea['priority']) . '</p>
-<p><span class="label">Target Date:</span> ' . h($sea['target_date']) . '</p>
-<h2>Affected Parts</h2>
+<p><span class="label">Target Date:</span> ' . h($sea['target_date']) . '</p><h2>Affected Parts</h2>
 ' . (empty($parts) ? '<p><em>None</em></p>' : $partsHtml) . '
 <h2>Work Instructions</h2>
 ' . (empty($inst) ? '<p><em>None</em></p>' : $instHtml) . '
