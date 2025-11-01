@@ -15,6 +15,12 @@ define('DATA_DIR', ROOT_DIR . '/data');         // Where SEAs are stored
 define('UPLOAD_DIR', DATA_DIR . '/uploads');    // File attachments
 define('PUBLIC_DIR', ROOT_DIR . '/public');     // Public web root
 
+// Create directories if missing
+foreach ([DATA_DIR, UPLOAD_DIR, DATA_DIR . '/history'] as $dir) {
+    if (!is_dir($dir)) {
+        mkdir($dir, 0755, true);
+    }
+}
 // -----------------------------
 // 3. Email Settings (optional)
 // -----------------------------
