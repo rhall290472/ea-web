@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Engineering Authorizations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .parts-table th, .parts-table td,
+        .instr-table th, .instr-table td { vertical-align: middle; }
+        .parts-table input, .parts-table textarea,
+        .instr-table input, .instr-table textarea { width: 100%; border: none; padding: 6px; }
+        .parts-table .btn-sm, .instr-table .btn-sm { font-size: 0.8rem; }
+        .parts-row:hover, .instr-row:hover { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Simulator Engineering Authorizations</h1>
+        <div>
+            <button id="showECN" class="btn btn-outline-primary">New SEA</button>
+        </div>
+    </div>
+
+    <!-- SEA Form -->
+    <div id="seaSection" class="border p-4 rounded bg-white">
+        <h3 id="seaTitle">New Simulator Engineering Authorization (SEA)</h3>
+
+        <form id="seaForm" action="../src/submit.php" method="POST" enctype="multipart/form-data" class="row g-3">
+
+            <!-- Hidden fields -->
+            <input type="hidden" name="sea_id" id="sea_id">
+            <input type="hidden" name="action" id="sea_action" value="create">
+            <input type="hidden" name="parts_json" id="parts_json">
+            <input type="hidden" name="instructions_json" id="instructions_json">
+
+            <!-- SEA ID -->
+            <div class="col-md-6">
+                <label class="form-label">SEA ID</label>
+                <input type="text" class="form-control" id="display_id" disabled placeholder="Auto-generated">
+            </div>
+
+            <!-- Requester -->
+            <div class="col-md-6">
+                <label for="requester" class="form-label">Requester <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="requester" name="requester" required>
+            </div>
+
+            <!-- Description -->
+            <div class="col-12">
+                <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+
+            <!-- Justification -->
+            <div class="col-12">
+                <label for="justification" class="form-label">Justification / Rationale <span class="text-danger">*</span></label>
+                <textarea class="form-control" id="justification" name="justification" rows="3" required></textarea>
+            </div>
+
+            <!-- === PARTS TABLE === -->
+            <div class="col-12">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Affected Parts / BOM List</span>
+                    <button type="button" id="addPartRow" class="btn btn-sm btn-success">+ Add Part</button>
+                </label>
+                <div class="table-responsive">
+                    <table class="table table-bordered parts-table" id="partsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:20%">Part Number</th>
+                                <th style="width:35%">Description</th>
+                                <th style="width:25%">Change Type</th>
+                                <th style="width:15%">Qty</th>
+                                <th style="width:5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Impact -->
+            <div class="col-md-6">
+                <label for="impact" class="form-label">Impact Analysis (Cost, Schedule, Risk)</label>
+                <textarea class="form-control" id="impact" name="impact" rows="3"></textarea>
+            </div>
+
+            <!-- Priority -->
+            <div class="col-md-6">
+                <label for="priority" class="form-label">Priority</label>
+                <select class="form-select" id="priority" name="priority">
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                    <option value="Critical">Critical</option>
+                </select>
+            </div>
+
+            <!-- Target Date -->
+            <div class="col-md-6">
+                <label for="target_date" class="form-label">Target Implementation Date</label>
+                <input type="date" class="form-control" id="target_date" name="target_date">
+            </div>
+
+            <!-- Attachments -->
+            <div class="col-12">
+                <label for="attachments" class="form-label">Attachments (Drawings, Specs, etc.)</label>
+                <input type="file" class="form-control" id="attachments" name="attachments[]" multiple>
+                <small class="text-muted">PDF, DOCX, XLSX, JPG, PNG</small>
+            </div>
+
+            <!-- === WORK INSTRUCTIONS TABLE === -->
+            <div class="col-12">
+                <label class="form-label d-flex justify-content-between">
+                    <span>Work Instructions</span>
+                    <button type="button" id="addInstrRow" class="btn btn-sm btn-success">+ Add Step</button>
+                </label>
+                <div class="table-responsive">
+                    <table class="table table-bordered instr-table" id="instrTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:8%">#</th>
+                                <th style="width:45%">Instruction</th>
+                                <th style="width:25%">Responsible Party</th>
+                                <th style="width:17%">Notes</th>
+                                <th style="width:5%"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <small class="text-muted">Define step-by-step actions for implementation.</small>
+            </div>
+
+            <!-- Submit -->
+            <div class="col-12">
+                <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit SEA</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mt-4">
+        <a href="../src/view.php" class="btn btn-secondary">View All SEAs</a>
+    </div>
+</div>
+
+<script>
+// === PARTS TABLE ===
+const partsBody = document.querySelector('#partsTable tbody');
+document.getElementById('addPartRow').addEventListener('click', () => addPartRow());
+
+function addPartRow(data = {}) {
+    const row = document.createElement('tr');
+    row.className = 'parts-row';
+    row.innerHTML = `
+        <td><input type="text" class="part-number" value="${h(data.part || '')}" placeholder="P-123"></td>
+        <td><textarea class="part-desc" rows="1">${h(data.desc || '')}</textarea></td>
+        <td>
+            <select class="form-select form-select-sm change-type">
+                ${['Modify','Add','Remove','Replace'].map(o => 
+                    `<option value="${o}" ${o===data.type?'selected':''}>${o}</option>`
+                ).join('')}
+            </select>
+        </td>
+        <td><input type="number" class="part-qty text-center" min="1" value="${data.qty || 1}" style="width:60px"></td>
+        <td><button type="button" class="btn btn-sm btn-danger delete-row">Trash</button></td>
+    `;
+    partsBody.appendChild(row);
+    updatePartsJson();
+}
+
+// === WORK INSTRUCTIONS TABLE ===
+const instrBody = document.querySelector('#instrTable tbody');
+let stepCounter = 1;
+
+document.getElementById('addInstrRow').addEventListener('click', () => addInstrRow());
+
+function addInstrRow(data = {}) {
+    const row = document.createElement('tr');
+    row.className = 'instr-row';
+    row.innerHTML = `
+        <td class="text-center fw-bold">${stepCounter++}</td>
+        <td><textarea class="instr-text" rows="2" placeholder="e.g., Remove old bracket">${h(data.instruction || '')}</textarea></td>
+        <td><input type="text" class="instr-party" value="${h(data.party || '')}" placeholder="e.g., Technician A"></td>
+        <td><input type="text" class="instr-notes" value="${h(data.notes || '')}" placeholder="e.g., Use torque 5 Nm"></td>
+        <td><button type="button" class="btn btn-sm btn-danger delete-row">Trash</button></td>
+    `;
+    instrBody.appendChild(row);
+    updateInstrJson();
+}
+
+// Delete any row
+document.querySelectorAll('tbody').forEach(tb => {
+    tb.addEventListener('click', e => {
+        if (e.target.classList.contains('delete-row')) {
+            e.target.closest('tr').remove();
+            updatePartsJson();
+            updateInstrJson();
+            renumberSteps();
+        }
+    });
+});
+
+// Update JSON on input
+document.querySelectorAll('tbody').forEach(tb => {
+    tb.addEventListener('input', () => {
+        if (tb.closest('table').id === 'partsTable') updatePartsJson();
+        if (tb.closest('table').id === 'instrTable') updateInstrJson();
+    });
+    tb.addEventListener('change', () => {
+        if (tb.closest('table').id === 'partsTable') updatePartsJson();
+        if (tb.closest('table').id === 'instrTable') updateInstrJson();
+    });
+});
+
+function updatePartsJson() {
+    const rows = partsBody.querySelectorAll('tr');
+    const parts = Array.from(rows).map(row => ({
+        part: row.querySelector('.part-number').value.trim(),
+        desc: row.querySelector('.part-desc').value.trim(),
+        type: row.querySelector('.change-type').value,
+        qty: row.querySelector('.part-qty').value || '1'
+    })).filter(p => p.part || p.desc);
+    document.getElementById('parts_json').value = JSON.stringify(parts);
+}
+
+function updateInstrJson() {
+    const rows = instrBody.querySelectorAll('tr');
+    const instructions = Array.from(rows).map(row => ({
+        instruction: row.querySelector('.instr-text').value.trim(),
+        party: row.querySelector('.instr-party').value.trim(),
+        notes: row.querySelector('.instr-notes').value.trim()
+    })).filter(i => i.instruction);
+    document.getElementById('instructions_json').value = JSON.stringify(instructions);
+}
+
+function renumberSteps() {
+    stepCounter = 1;
+    instrBody.querySelectorAll('tr').forEach(row => {
+        row.querySelector('td:first-child').textContent = stepCounter++;
+    });
+}
+
+// Initialize
+addPartRow();
+addInstrRow();
+
+// === EDIT MODE ===
+const urlParams = new URLSearchParams(window.location.search);
+const seaId = urlParams.get('id');
+if (seaId) {
+    document.getElementById('sea_action').value = 'update';
+    document.getElementById('sea_id').value = seaId;
+    document.getElementById('display_id').value = seaId;
+    document.getElementById('seaTitle').textContent = 'Edit SEA – ' + seaId;
+    document.getElementById('submitBtn').textContent = 'Update SEA';
+
+    fetch(`../data/sea-${encodeURIComponent(seaId)}.json`)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('requester').value = data.requester || '';
+            document.getElementById('description').value = data.description || '';
+            document.getElementById('justification').value = data.justification || '';
+            document.getElementById('impact').value = data.impact || '';
+            document.getElementById('priority').value = data.priority || 'Medium';
+            document.getElementById('target_date').value = data.target_date || '';
+
+            // Load Parts
+            let parts = [];
+            try { parts = JSON.parse(data.parts_json || '[]'); } catch(e) {}
+            parts.forEach(p => addPartRow(p));
+
+            // Load Instructions
+            let instr = [];
+            try { instr = JSON.parse(data.instructions_json || '[]'); } catch(e) {}
+            stepCounter = 1;
+            instr.forEach(i => addInstrRow(i));
+        });
+}
+
+function h(str) { return (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
