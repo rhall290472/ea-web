@@ -1,5 +1,15 @@
 RewriteEngine On
-RewriteRule ^$ public/index.html [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ public/$1 [L]
+
+# Map /src → ../src
+RewriteRule ^src/(.*)$ ../src/$1 [L]
+
+# Map /data → ../data
+RewriteRule ^data/(.*)$ ../data/$1 [L]
+
+# Optional: Block direct access to sensitive files
+<Files ~ "^\.">
+    Require all denied
+</Files>
+
+# Prevent directory listing
+Options -Indexes

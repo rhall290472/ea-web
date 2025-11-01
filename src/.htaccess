@@ -1,0 +1,19 @@
+# Prevent viewing PHP source
+<Files ~ "\.php$">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Allow execution (PHP will still run)
+<Files "list_seas.php">
+    Order deny,allow
+    Allow from all
+</Files>
+<Files "submit.php">
+    Order deny,allow
+    Allow from all
+</Files>
+<Files "print_sea.php">
+    Order deny,allow
+    Allow from all
+</Files>
