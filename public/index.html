@@ -94,13 +94,13 @@
           <label>Fleet <span class="text-danger">*</span></label>
           <select class="form-select" id="fleet" name="fleet" required>
             <option value="">Select Fleet</option>
+            <option value="737">737</option>
+            <option value="737-MAX">737 MAX</option>
+            <option value="757">757</option>
+            <option value="767">767</option>
+            <option value="777">777</option>
+            <option value="787">787</option>
             <option value="A320">A320</option>
-            <option value="B737-NG">B737-NG</option>
-            <option value="B737-MAX">B737-MAX</option>
-            <option value="B757">B757</option>
-            <option value="B767">B767</option>
-            <option value="B777">B777</option>
-            <option value="B787">B787</option>
           </select>
         </div>
 
@@ -195,13 +195,14 @@
   <script>
     // ============== FLEET → DEVICES ==============
     const fleetDeviceMap = {
-      'A320': ['210'],
-      'B737-NG': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4'],
-      'B737-MAX': ['587', '588', '589'],
-      'B757': [],
-      'B767': [],
-      'B777': [],
-      'B787': []
+      'B37': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', , 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10'],
+      'B737-MAX': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11',
+                   'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6', 'FTD-7', 'FTD-8', 'FTD-9', 'FTD-10', 'FTD-11' ],
+      '757': ['FFS-1', 'FFS-2', 'FFS-3', 'FTD-1', 'FTD-2'],
+      '767': ['FFS-3', 'FFS-4', 'FFS-5'],
+      '777': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-5', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FTD-3'],
+      '787': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6'],
+      'A320': ['FFS-1', 'FFS-4', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11', 'FFS-12', 'FFS-13', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6', 'FTD-7']
     };
 
     function rebuildDeviceSelect() {
