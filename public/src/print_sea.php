@@ -2,6 +2,7 @@
 // src/print_sea.php
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../vendor/autoload.php';
+
 use Mpdf\Mpdf;
 
 // ------------------------------------------------------------------
@@ -23,69 +24,92 @@ if (!is_array($sea)) {
 // ------------------------------------------------------------------
 // 2. HELPERS
 // ------------------------------------------------------------------
-function h($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
-function nl2br_h($s) { return nl2br(h($s)); }
+function h($s)
+{
+    return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+}
+function nl2br_h($s)
+{
+    return nl2br(h($s));
+}
 
 // ------------------------------------------------------------------
 // 3. PARTS TABLE
 // ------------------------------------------------------------------
 $parts = json_decode($sea['parts_json'] ?? '[]', true) ?? [];
 $partsHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">
-    <tr style="background:#f8f9fa;">
-        <th style="border:1px solid #ddd;padding:8px;">Part</th>
-        <th style="border:1px solid #ddd;padding:8px;">Desc</th>
-        <th style="border:1px solid #ddd;padding:8px;">Type</th>
-        <th style="border:1px solid #ddd;padding:8px;text-align:center;">Qty</th>
-    </tr>';
+    <thead>
+        <tr style="background:#f8f9fa;">
+            <th style="border:1px solid #ddd;padding:8px;">Part</th>
+            <th style="border:1px solid #ddd;padding:8px;">Desc</th>
+            <th style="border:1px solid #ddd;padding:8px;">Type</th>
+            <th style="border:1px solid #ddd;padding:8px;text-align:center;">Qty</th>
+        </tr>
+    </thead>
+    <tbody>';
 foreach ($parts as $p) {
     $partsHtml .= "<tr>
-        <td style=\"border:1px solid #ddd;padding:8px;\">".h($p['part']??'')."</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">".h($p['desc']??'')."</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">".h($p['type']??'')."</td>
-        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">".h($p['qty']??'')."</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['part'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['desc'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['type'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . h($p['qty'] ?? '') . "</td>
     </tr>";
 }
-$partsHtml .= '</table>';
-if (empty($parts)) $partsHtml = '<p><em>None</em></p>';
+$partsHtml .= '</tbody></table>';
+if (empty($parts)) {
+    $partsHtml = '<p style="font-style:italic;color:#666;margin:15px 0;">None</p>';
+}
 
 // ------------------------------------------------------------------
-// 4. INSTRUCTIONS TABLE  (no “party” column)
+// 4. INSTRUCTIONS TABLE
 // ------------------------------------------------------------------
 $inst = json_decode($sea['instructions_json'] ?? '[]', true) ?? [];
 $instHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">
-    <tr style="background:#f8f9fa;">
-        <th style="border:1px solid #ddd;padding:8px;width:8%;">#</th>
-        <th style="border:1px solid #ddd;padding:8px;">Instruction</th>
-        <th style="border:1px solid #ddd;padding:8px;">Notes</th>
-    </tr>';
+    <thead>
+        <tr style="background:#f8f9fa;">
+            <th style="border:1px solid #ddd;padding:8px;width:8%;">#</th>
+            <th style="border:1px solid #ddd;padding:8px;">Instruction</th>
+            <th style="border:1px solid #ddd;padding:8px;">Notes</th>
+        </tr>
+    </thead>
+    <tbody>';
 foreach ($inst as $i => $row) {
     $instHtml .= "<tr>
-        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">".($i+1)."</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">".nl2br_h($row['instruction']??'')."</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">".h($row['notes']??'')."</td>
+        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['instruction'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['notes'] ?? '') . "</td>
     </tr>";
 }
-$instHtml .= '</table>';
-if (empty($inst)) $instHtml = '<p><em>None</em></p>';
+$instHtml .= '</tbody></table>';
+if (empty($inst)) {
+    $instHtml = '<p style="font-style:italic;color:#666;margin:15px 0;">None</p>';
+}
 
 // ------------------------------------------------------------------
-// 5. ATTACHMENTS (list of clickable links)
+// 5. ATTACHMENTS (clickable links)
 // ------------------------------------------------------------------
 $attachHtml = '';
-if (!empty($sea['attachments'])) {
-    $attachHtml = '<h2>Attachments</h2><ul style="font-size:11px;">';
+if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
+    $attachHtml = '<h2 style="margin-top:30px;font-size:14px;">Attachments</h2>
+        <ul style="font-size:11px;margin:10px 0 20px 20px;">';
     foreach ($sea['attachments'] as $url) {
         $name = basename($url);
-        $full = (strpos($url,'http')===0) ? $url : 'http://'.$_SERVER['HTTP_HOST'].$url;
-        $attachHtml .= "<li><a href=\"{$full}\">{$name}</a></li>";
+        $fullUrl = (strpos($url, 'http') === 0) ? $url : 'http://' . $_SERVER['HTTP_HOST'] . $url;
+        $attachHtml .= "<li><a href=\"{$fullUrl}\" target=\"_blank\">" . h($name) . "</a></li>";
     }
     $attachHtml .= '</ul>';
 }
 
 // ------------------------------------------------------------------
-// 6. DEVICE DISPLAY
+// 6. DEVICE DISPLAY (FIXED: handles array safely)
 // ------------------------------------------------------------------
-$deviceDisplay = is_array($sea['device'] ?? []) ? implode(', ', $sea['device']) : ($sea['device'] ?? '—');
+$deviceDisplay = '';
+if (!empty($sea['device'])) {
+    $devices = is_array($sea['device']) ? $sea['device'] : [$sea['device']];
+    $deviceDisplay = h(implode(', ', array_filter($devices)));
+} else {
+    $deviceDisplay = '—';
+}
 
 // ------------------------------------------------------------------
 // 7. FINAL HTML
@@ -94,64 +118,119 @@ $html = <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-    body {font-family:Arial;margin:30px;font-size:12px;}
-    h1   {text-align:center;color:#2c3e50;}
-    .label {font-weight:bold;width:150px;display:inline-block;}
-    a    {color:#0066cc;text-decoration:underline;}
-</style>
+    <meta charset="UTF-8">
+    <style>
+        body {font-family:Arial,Helvetica,sans-serif;margin:30px;font-size:12px;line-height:1.5;}
+        h1 {text-align:center;color:#2c3e50;margin-bottom:5px;}
+        h2 {font-size:14px;color:#2c3e50;margin:25px 0 10px 0;}
+        .label {font-weight:bold;display:inline-block;width:150px;color:#444;}
+        p {margin:8px 0;}
+        table {width:100%;border-collapse:collapse;margin:15px 0;}
+        th, td {border:1px solid #ddd;padding:8px;font-size:11px;}
+        th {background:#f8f9fa;text-align:left;}
+        a {color:#0066cc;text-decoration:underline;}
+        a:hover {text-decoration:none;}
+        .generated {text-align:center;color:#666;font-size:10px;margin-top:20px;}
+    </style>
 </head>
 <body>
-<h1>Simulator Engineering Authorization (SEA)</h1>
-<p style="text-align:center;"><strong>Generated:</strong> <?=date('Y-m-d H:i:s')?></p>
+    <h1>Simulator Engineering Authorization (SEA)</h1>
+    <p class="generated"><strong>Generated:</strong> {{DATE}}</p>
 
-<p><span class="label">SEA ID:</span>      <?=h($sea['id'])?></p>
-<p><span class="label">EA#:</span>          <?=h($sea['ea_number']??'—')?></p>
-<p><span class="label">Revision:</span>    <?=h($sea['revision']??'—')?></p>
-<p><span class="label">Fleet:</span>       <?=h($sea['fleet']??'—')?></p>
-<p><span class="label">Device(s):</span>  <?=h($deviceDisplay)?></p>
-<p><span class="label">Requester:</span>   <?=h($sea['requester']??'—')?></p>
+    <p><span class="label">SEA ID:</span> {{SEA_ID}}</p>
+    <p><span class="label">EA#:</span> {{EA_NUMBER}}</p>
+    <p><span class="label">Revision:</span> {{REVISION}}</p>
+    <p><span class="label">Fleet:</span> {{FLEET}}</p>
+    <p><span class="label">Device(s):</span> {{DEVICES}}</p>
+    <p><span class="label">Requester:</span> {{REQUESTER}}</p>
 
-<p><span class="label">Description:</span>   <?=nl2br_h($sea['description']??'—')?></p>
-<p><span class="label">Justification:</span><?=nl2br_h($sea['justification']??'—')?></p>
-<p><span class="label">Impact:</span>       <?=nl2br_h($sea['impact']??'—')?></p>
-<p><span class="label">Priority:</span>     <?=h($sea['priority']??'—')?></p>
-<p><span class="label">Target Date:</span>  <?=h($sea['target_date']??'—')?></p>
+    <p><span class="label">Description:</span><br>{{DESCRIPTION}}</p>
+    <p><span class="label">Justification:</span><br>{{JUSTIFICATION}}</p>
+    <p><span class="label">Impact:</span><br>{{IMPACT}}</p>
+    <p><span class="label">Priority:</span> {{PRIORITY}}</p>
+    <p><span class="label">Target Date:</span> {{TARGET_DATE}}</p>
 
-<h2>Affected Parts</h2>
-{$partsHtml}
+    <h2>Affected Parts</h2>
+    {{PARTS_TABLE}}
 
-<h2>Work Instructions</h2>
-{$instHtml}
+    <h2>Work Instructions</h2>
+    {{INSTRUCTIONS_TABLE}}
 
-{$attachHtml}
+    {{ATTACHMENTS}}
 </body>
 </html>
 HTML;
+
+// Replace placeholders
+$replacements = [
+    '{{DATE}}'           => date('Y-m-d H:i:s'),
+    '{{SEA_ID}}'         => h($sea['id'] ?? ''),
+    '{{EA_NUMBER}}'      => h($sea['ea_number'] ?? '—'),
+    '{{REVISION}}'       => h($sea['revision'] ?? '—'),
+    '{{FLEET}}'          => h($sea['fleet'] ?? '—'),
+    '{{DEVICES}}'        => $deviceDisplay,
+    '{{REQUESTER}}'      => h($sea['requester'] ?? '—'),
+    '{{DESCRIPTION}}'    => nl2br_h($sea['description'] ?? '—'),
+    '{{JUSTIFICATION}}'  => nl2br_h($sea['justification'] ?? '—'),
+    '{{IMPACT}}'          => nl2br_h($sea['impact'] ?? '—'),
+    '{{PRIORITY}}'       => h($sea['priority'] ?? '—'),
+    '{{TARGET_DATE}}'    => h($sea['target_date'] ?? '—'),
+    '{{PARTS_TABLE}}'    => $partsHtml,
+    '{{INSTRUCTIONS_TABLE}}' => $instHtml,
+    '{{ATTACHMENTS}}'     => $attachHtml,
+];
+
+$html = str_replace(array_keys($replacements), array_values($replacements), $html);
 
 // ------------------------------------------------------------------
 // 8. CREATE & SEND PDF
 // ------------------------------------------------------------------
 ob_clean();
-$mpdf = new Mpdf(['format'=>'A4']);
+$mpdf = new Mpdf([
+    'format' => 'A4',
+    'margin_left' => 15,
+    'margin_right' => 15,
+    'margin_top' => 20,
+    'margin_bottom' => 20,
+]);
+
 $mpdf->WriteHTML($html);
 
-// OPTIONAL: embed any attached PDFs that live on the server
-if (!empty($sea['attachments'])) {
+// ------------------------------------------------------------------
+// 9. EMBED ATTACHED PDF FILES (if local)
+// ------------------------------------------------------------------
+if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
     foreach ($sea['attachments'] as $url) {
-        $file = $_SERVER['DOCUMENT_ROOT'] . parse_url($url, PHP_URL_PATH);
-        if (is_file($file) && strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'pdf') {
+        // Only process local files (not external URLs)
+        if (strpos($url, 'http') === 0) continue;
+
+        $filePath = $_SERVER['DOCUMENT_ROOT'] . parse_url($url, PHP_URL_PATH);
+        if (!is_file($filePath)) continue;
+
+        $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+        if ($ext !== 'pdf') continue;
+
+        try {
             $mpdf->AddPage();
             $mpdf->SetImportUse();
-            $pageCount = $mpdf->SetSourceFile($file);
-            for ($i=1; $i<=$pageCount; $i++) {
+            $pageCount = $mpdf->SetSourceFile($filePath);
+            for ($i = 1; $i <= $pageCount; $i++) {
                 $tpl = $mpdf->ImportPage($i);
                 $mpdf->UseTemplate($tpl);
-                if ($i < $pageCount) $mpdf->AddPage();
+                if ($i < $pageCount) {
+                    $mpdf->AddPage();
+                }
             }
+        } catch (Exception $e) {
+            // Silently fail on corrupt PDF
+            error_log("Failed to embed attachment: $filePath - " . $e->getMessage());
         }
     }
 }
 
-$mpdf->Output('SEA-' . $sea['id'] . '.pdf', 'D');
+// ------------------------------------------------------------------
+// 10. OUTPUT
+// ------------------------------------------------------------------
+$filename = 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf';
+$mpdf->Output($filename, 'D');
 exit;
