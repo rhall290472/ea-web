@@ -10,7 +10,7 @@ date_default_timezone_set('America/New_York'); // Change to your local timezone
 // -----------------------------
 // 2. Paths (auto-calculated)
 // -----------------------------
-define('ROOT_DIR', __DIR__);                    // e.g., /var/www/ea-web
+define('ROOT_DIR', __DIR__ .'/public');                    // e.g., /var/www/ea-web
 define('DATA_DIR', ROOT_DIR . '/data');         // Where SEAs are stored
 define('UPLOAD_DIR', DATA_DIR . '/uploads');    // File attachments
 define('PUBLIC_DIR', ROOT_DIR . '/public');     // Public web root

@@ -1,0 +1,35 @@
+{
+    "id": "SEA-20251102-970",
+    "requester": "Richard Hall",
+    "description": "737 FMC OPC SOFTWARE UPDATE VNAV ALT ENABLE",
+    "justification": "This EA installs a new version of the FMC OPC software on 737 NG Aircraft. This new OPC software enables the VNAV ALT feature as requested by flight ops. This change allows the aircraft to stay in VNAV mode when a conflict occurs between the VNAV profile and the MCP altitude, which decreases workload for pilots.",
+    "impact": "",
+    "priority": "Medium",
+    "target_date": "2026-04-01",
+    "timestamp": "2025-11-02 10:54:29",
+    "status": "Submitted",
+    "version": 1,
+    "parts_json": "[{\"part\":\"BCG-02C-S1\",\"desc\":\"FMC OPC - 0806\",\"type\":\"Add\",\"qty\":\"1\"},{\"part\":\"BCG-02C-S2\",\"desc\":\"FMC OPC - 0514\",\"type\":\"Add\",\"qty\":\"1\"},{\"part\":\"BCG-02C-S4\",\"desc\":\"FMC OPC - 0299\",\"type\":\"Add\",\"qty\":\"1\"}]",
+    "instructions_json": "[{\"instruction\":\"In the utility DBManager, create a new configuration and replace the FMC OPC with the part\\nnumber listed in this Operation.\",\"party\":\"\",\"notes\":\"\"}]",
+    "ea_number": "3461-01396",
+    "revision": "A",
+    "fleet": "737",
+    "device": [
+        "FFS-2",
+        "FFS-3",
+        "FFS-4",
+        "FFS-5",
+        "FTD-1",
+        "FTD-2",
+        "FTD-3",
+        "FTD-4",
+        "FFS-6",
+        "FFS-7",
+        "FFS-8",
+        "FFS-9",
+        "FFS-10"
+    ],
+    "attachments": [
+        "C:\\xampp\\htdocs\\ea-web\/public\/data\/uploads\/SEA\/SEA-20251102-970\/1762098869_20f1957f.pdf"
+    ]
+}

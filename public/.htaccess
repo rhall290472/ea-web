@@ -1,10 +1,10 @@
 RewriteEngine On
 
 # Map /src → ../src
-RewriteRule ^src/(.*)$ ../src/$1 [L]
+#RewriteRule ^src/(.*)$ ../src/$1 [L]
 
 # Map /data → ../data
-RewriteRule ^data/(.*)$ ../data/$1 [L]
+#RewriteRule ^data/(.*)$ ../data/$1 [L]
 
 # Optional: Block direct access to sensitive files
 <Files ~ "^\.">
