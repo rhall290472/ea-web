@@ -4,9 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulator Engineering Authorizations</title>
+  <title>Simulator Engineering Authoring Tool</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     .choice-card {
       cursor: pointer;
@@ -49,6 +50,34 @@
     .select2-container {
       width: 100% !important
     }
+
+    /* ... your existing styles ... */
+
+    /* Make Instruction column ~75% of table width */
+    #instrTable th:nth-child(2),
+    #instrTable td:nth-child(2) {
+      width: 75%;
+    }
+
+    /* Optional: make Notes column tighter */
+    #instrTable th:nth-child(3),
+    #instrTable td:nth-child(3) {
+      width: 20%;
+    }
+
+    /* Delete button column stays minimal */
+    #instrTable th:last-child,
+    #instrTable td:last-child {
+      width: 5%;
+    }
+
+    /* Ensure textareas fill their cell */
+    #instrTable .instr-text,
+    #instrTable .instr-notes {
+      width: 100%;
+      min-height: 60px;
+      resize: vertical;
+    }
   </style>
 </head>
 
@@ -57,7 +86,7 @@
 
     <!-- CHOICE SCREEN -->
     <div id="choiceScreen">
-      <h1 class="text-center mb-5">Simulator Engineering Authorizations</h1>
+      <h1 class="text-center mb-5">Simulator Engineering Authoring Tool</h1>
       <div class="row g-4">
         <div class="col-md-6">
           <div class="card choice-card h-100 text-center p-4" onclick="showCreateForm()">
@@ -85,10 +114,18 @@
         <input type="hidden" name="parts_json" id="parts_json">
         <input type="hidden" name="instructions_json" id="instructions_json">
 
-        <div class="col-md-6"><label>SEA ID</label><input type="text" class="form-control" id="display_id" disabled>
+        <div class="col-md-6">
+          <label>SEA ID</label>
+          <input type="text" class="form-control" id="display_id" disabled>
         </div>
-        <div class="col-md-6"><label>EA#</label><input type="text" class="form-control" name="ea_number"></div>
-        <div class="col-md-4"><label>Revision</label><input type="text" class="form-control" name="revision"></div>
+        <div class="col-md-6">
+          <label>EA#</label>
+          <input type="text" class="form-control" name="ea_number" id="ea_number">
+        </div>
+        <div class="col-md-4">
+          <label>Revision</label>
+          <input type="text" class="form-control" name="revision" id="revision">
+        </div>
 
         <div class="col-md-4">
           <label>Fleet <span class="text-danger">*</span></label>
@@ -111,12 +148,18 @@
           <small class="text-muted">Ctrl/Cmd to select multiple</small>
         </div>
 
-        <div class="col-md-6"><label>Requester <span class="text-danger">*</span></label><input type="text"
-            class="form-control" name="requester" required></div>
-        <div class="col-12"><label>Description <span class="text-danger">*</span></label><textarea class="form-control"
-            name="description" rows="3" required></textarea></div>
-        <div class="col-12"><label>Justification <span class="text-danger">*</span></label><textarea
-            class="form-control" name="justification" rows="3" required></textarea></div>
+        <div class="col-md-6">
+          <label>Requester <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="requester" id="requester" required>
+        </div>
+        <div class="col-12">
+          <label>Description <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="description" id="description" rows="3" required></textarea>
+        </div>
+        <div class="col-12">
+          <label>Justification <span class="text-danger">*</span></label>
+          <textarea class="form-control" name="justification" id="justification" rows="3" required></textarea>
+        </div>
 
         <!-- PARTS TABLE -->
         <div class="col-12">
@@ -138,23 +181,34 @@
           </table>
         </div>
 
-        <div class="col-md-6"><label>Impact</label><textarea class="form-control" name="impact" rows="3"></textarea>
+        <div class="col-md-6">
+          <label>Impact</label>
+          <textarea class="form-control" name="impact" id="impact" rows="3"></textarea>
         </div>
         <div class="col-md-6">
           <label>Priority</label>
-          <select class="form-select" name="priority">
+          <select class="form-select" name="priority" id="priority">
             <option>Low</option>
             <option selected>Medium</option>
             <option>High</option>
             <option>Critical</option>
           </select>
         </div>
-        <div class="col-md-6"><label>Target Date</label><input type="date" class="form-control" name="target_date">
+        <div class="col-md-6">
+          <label>Target Date</label>
+          <input type="date" class="form-control" name="target_date" id="target_date">
         </div>
-        <div class="col-12"><label>Attachments</label><input type="file" class="form-control" name="attachments[]"
-            multiple></div>
+        <div class="col-12">
+          <label>Attachments</label>
 
-        <!-- INSTRUCTIONS -->
+          <!-- Existing Attachments -->
+          <div id="existingAttachments" class="mb-2"></div>
+
+          <!-- New Uploads -->
+          <input type="file" class="form-control" name="attachments[]" multiple>
+          <small class="text-muted">Add new files (existing files preserved unless removed)</small>
+        </div>
+        <!-- INSTRUCTIONS (NO PARTY COLUMN) -->
         <div class="col-12">
           <label class="d-flex justify-content-between">
             <span>Work Instructions</span>
@@ -165,7 +219,6 @@
               <tr>
                 <th>#</th>
                 <th>Instruction</th>
-                <th>Party</th>
                 <th>Notes</th>
                 <th></th>
               </tr>
@@ -174,7 +227,9 @@
           </table>
         </div>
 
-        <div class="col-12"><button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit SEA</button></div>
+        <div class="col-12">
+          <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit SEA</button>
+        </div>
       </form>
     </div>
 
@@ -195,7 +250,7 @@
   <script>
     // ============== FLEET → DEVICES ==============
     const fleetDeviceMap = {
-      '737': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', , 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10'],
+      '737': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10'],
       '737-MAX': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11',
         'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6', 'FTD-7', 'FTD-8', 'FTD-9', 'FTD-10', 'FTD-11'],
       '757': ['FFS-1', 'FFS-2', 'FFS-3', 'FTD-1', 'FTD-2'],
@@ -219,55 +274,68 @@
       const devices = fleetDeviceMap[fleet] || [];
 
       if (devices.length) {
-        $col.show(); // FORCE visible
+        $col.show();
         devices.forEach(d => $dev.append(`<option value="${d}">${d}</option>`));
       } else {
         $col.hide();
-        $dev.append('<option></option>');
+        $dev.append('<option value="">No devices available</option>');
       }
 
-      // Re-init
+      // Always initialize Select2
       $dev.select2({
-        placeholder: devices.length ? 'Select device(s)' : 'No devices',
-        allowClear: true,
+        placeholder: devices.length ? 'Select device(s)' : 'No devices available',
+        allowClear: !devices.length,
         width: '100%'
       });
 
-      // Force render if needed
-      if (devices.length > 5) {
-        setTimeout(() => {
-          $dev.select2('open');
-          $dev.select2('close');
-        }, 100);
-      }
-
+      // Trigger change to clear any old selection
       $dev.val(null).trigger('change');
     }
+
     document.getElementById('fleet').addEventListener('change', rebuildDeviceSelect);
 
     // ============== NAVIGATION ==============
     function showCreateForm() {
       hideAll();
       $('#createForm').removeClass('hidden');
-      $('#seaForm')[0].reset();
+
+      // DO NOT reset() — only clear what we control
       $('#sea_id').val('');
       $('#sea_action').val('create');
       $('#display_id').val('');
       $('#formTitle').text('New Simulator Engineering Authorization (SEA)');
       $('#submitBtn').text('Submit SEA');
+
+      // Clear fields safely
+      $('#ea_number, #revision, #requester, #description, #justification, #impact, #target_date').val('');
+      $('#priority').val('Medium');
+      $('#fleet').val('').trigger('change');  // triggers rebuildDeviceSelect
       $('#partsTable tbody, #instrTable tbody').empty();
       $('#deviceCol').hide();
+
       stepCounter = 1;
       addPartRow();
       addInstrRow();
-      rebuildDeviceSelect();   // start clean
     }
-    function showSeaList() { hideAll(); $('#seaList').removeClass('hidden'); loadSeaList(); }
-    function goBack() { hideAll(); $('#choiceScreen').removeClass('hidden'); }
-    function hideAll() { $('#choiceScreen,#createForm,#seaList').addClass('hidden'); }
+
+    function showSeaList() {
+      hideAll();
+      $('#seaList').removeClass('hidden');
+      loadSeaList();
+    }
+
+    function goBack() {
+      hideAll();
+      $('#choiceScreen').removeClass('hidden');
+    }
+
+    function hideAll() {
+      $('#choiceScreen,#createForm,#seaList').addClass('hidden');
+    }
 
     // ============== TABLES ==============
     let stepCounter = 1;
+
     function addPartRow(d = {}) {
       const html = `<tr>
         <td><input class="part-number" value="${h(d.part || '')}"></td>
@@ -277,23 +345,34 @@
         </select></td>
         <td><input type="number" class="part-qty" value="${d.qty || 1}" style="width:60px"></td>
         <td><button type="button" class="btn btn-sm btn-danger delete-row">X</button></td>
-    </tr>`;
+      </tr>`;
       $('#partsTable tbody').append(html);
       updatePartsJson();
     }
+
     function addInstrRow(d = {}) {
       const html = `<tr>
         <td class="text-center fw-bold">${stepCounter++}</td>
         <td><textarea class="instr-text" rows="2">${h(d.instruction || '')}</textarea></td>
-        <td><input class="instr-party" value="${h(d.party || '')}"></td>
         <td><input class="instr-notes" value="${h(d.notes || '')}"></td>
         <td><button type="button" class="btn btn-sm btn-danger delete-row">X</button></td>
-    </tr>`;
+      </tr>`;
       $('#instrTable tbody').append(html);
       updateInstrJson();
     }
-    $(document).on('click', '.delete-row', function () { $(this).closest('tr').remove(); renumberSteps(); updatePartsJson(); updateInstrJson(); });
-    function renumberSteps() { stepCounter = 1; $('#instrTable tbody tr td:first-child').each(function () { $(this).text(stepCounter++); }); }
+
+    $(document).on('click', '.delete-row', function () {
+      $(this).closest('tr').remove();
+      renumberSteps();
+      updatePartsJson();
+      updateInstrJson();
+    });
+
+    function renumberSteps() {
+      stepCounter = 1;
+      $('#instrTable tbody tr td:first-child').each(function () { $(this).text(stepCounter++); });
+    }
+
     function updatePartsJson() {
       const parts = $('#partsTable tbody tr').map(function () {
         return {
@@ -305,42 +384,44 @@
       }).get().filter(p => p.part || p.desc);
       $('#parts_json').val(JSON.stringify(parts));
     }
+
     function updateInstrJson() {
       const instr = $('#instrTable tbody tr').map(function () {
         return {
           instruction: $(this).find('.instr-text').val().trim(),
-          party: $(this).find('.instr-party').val().trim(),
           notes: $(this).find('.instr-notes').val().trim()
         };
       }).get().filter(i => i.instruction);
       $('#instructions_json').val(JSON.stringify(instr));
     }
+
     $('#addPartRow').on('click', () => addPartRow());
     $('#addInstrRow').on('click', () => addInstrRow());
     $('#seaForm').on('input', () => { updatePartsJson(); updateInstrJson(); });
 
     // ============== LIST & EDIT ==============
-  function loadSeaList() {
-    const $container = $('#seaContainer');
-    $container.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
+    function loadSeaList() {
+      const $container = $('#seaContainer');
+      $container.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
 
-    fetch('./src/list_seas.php')
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.text();
-      })
-      .then(html => {
-        $container.html(html);
-      })
-      .catch(err => {
-        $container.html(`
+      fetch('./src/list_seas.php')
+        .then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.text();
+        })
+        .then(html => {
+          $container.html(html);
+        })
+        .catch(err => {
+          $container.html(`
                 <div class="alert alert-danger">
                     Failed to load SEAs: ${err.message}
                     <br><small><a href="./src/list_seas.php" target="_blank">Test list_seas.php</a></small>
                 </div>
             `);
-      });
-  }
+        });
+    }
+
     function deleteSea(id) {
       if (!confirm(`Are you sure you want to PERMANENTLY delete SEA-${id}?\n\nThis will remove:\n• The SEA record\n• All attachments\n• All version history\n\nThis action cannot be undone.`)) {
         return;
@@ -362,16 +443,21 @@
     }
 
     function editSea(id) {
-      showCreateForm();
+      showCreateForm();  // Now safe — no .reset()
+
       $('#sea_action').val('update');
       $('#sea_id').val(id);
       $('#display_id').val(id);
       $('#formTitle').text('Edit SEA – ' + id);
       $('#submitBtn').text('Update SEA');
 
-      fetch(`/data/sea-${id}.json`)
-        .then(r => r.json())
+      fetch(`data/sea-${id}.json`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+          return r.json();
+        })
         .then(d => {
+          // === FILL TEXT FIELDS ===
           $('#ea_number').val(d.ea_number || '');
           $('#revision').val(d.revision || '');
           $('#requester').val(d.requester || '');
@@ -380,20 +466,46 @@
           $('#impact').val(d.impact || '');
           $('#priority').val(d.priority || 'Medium');
           $('#target_date').val(d.target_date || '');
+
+          // === FLEET & DEVICES ===
+          const savedDevices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
           $('#fleet').val(d.fleet || '').trigger('change');
 
-          setTimeout(() => {
-            const saved = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
-            $('#device').val(saved).trigger('change');
-          }, 150);
+          // Wait for Select2 to be ready
+          const waitForSelect2 = () => {
+            return new Promise(resolve => {
+              const check = () => {
+                const $dev = $('#device');
+                if ($dev.hasClass('select2-hidden-accessible') && $dev.find('option').length > 0) {
+                  resolve();
+                } else {
+                  setTimeout(check, 50);
+                }
+              };
+              check();
+            });
+          };
 
+          waitForSelect2().then(() => {
+            $('#device').val(savedDevices).trigger('change');
+          });
+
+          // === PARTS & INSTRUCTIONS ===
           $('#partsTable tbody').empty();
-          JSON.parse(d.parts_json || '[]').forEach(addPartRow);
           $('#instrTable tbody').empty();
           stepCounter = 1;
-          JSON.parse(d.instructions_json || '[]').forEach(addInstrRow);
+
+          (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
+          (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
+          // === ATTACHMENTS ===
+          loadExistingAttachments(d.attachments);
+        })
+        .catch(err => {
+          console.error(err);
+          alert('Failed to load SEA: ' + err.message);
         });
     }
+
     $('#searchInput').on('input', function () {
       const term = this.value.toLowerCase();
       $('.sea-card').each(function () {
@@ -401,7 +513,51 @@
         $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
       });
     });
-    function h(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+    // === ATTACHMENTS IN EDIT MODE ===
+    function loadExistingAttachments(attachments) {
+      const $container = $('#existingAttachments');
+      $container.empty();
+
+      if (!attachments || attachments.length === 0) {
+        $container.html('<small class="text-muted">No attachments</small>');
+        return;
+      }
+
+      const list = attachments.map(url => {
+        const filename = url.split('/').pop();
+        const fullUrl = url.startsWith('http') ? url : location.origin + url;
+        return `
+      <div class="d-flex align-items-center mb-1 p-2 border rounded bg-light">
+        <a href="${fullUrl}" target="_blank" class="text-decoration-none me-2 flex-grow-1">
+          ${filename}
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-danger" 
+                onclick="removeExistingAttachment(this, '${url}')">
+          Remove
+        </button>
+        <input type="hidden" name="keep_attachments[]" value="${url}">
+      </div>`;
+      }).join('');
+
+      $container.html(`
+    <div class="border p-2 rounded bg-white mb-2">
+      <small class="text-muted d-block mb-2"><strong>Current attachments:</strong> (click to open, remove to delete)</small>
+      ${list}
+    </div>
+  `);
+    }
+
+    function removeExistingAttachment(btn, url) {
+      if (confirm('Remove this attachment? It will be deleted on save.')) {
+        $(btn).closest('div').remove();
+        $(`input[name="keep_attachments[]"][value="${url}"]`).remove();
+      }
+    }
+
+    function h(s) {
+      return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
     // ============== START ==============
     hideAll();
