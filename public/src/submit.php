@@ -2,7 +2,6 @@
 // src/submit.php
 require_once __DIR__ . '/../../config.php';
 
-// Start output buffering
 ob_start();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -10,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   exit;
 }
 
-// === GET ACTION & ID ===
+// === ACTION & ID ===
 $action = $_POST['action'] ?? 'create';
 $sea_id = $_POST['sea_id'] ?? '';
 
@@ -35,33 +34,54 @@ $sea = [
   'version'        => ($existing['version'] ?? 0) + 1,
   'parts_json'     => $_POST['parts_json'] ?? $existing['parts_json'] ?? '[]',
   'instructions_json' => $_POST['instructions_json'] ?? $existing['instructions_json'] ?? '[]',
-  'ea_number'  => $_POST['ea_number'] ?? $existing['ea_number'] ?? '',
-  'revision'   => $_POST['revision'] ?? $existing['revision'] ?? '',
-  'fleet'      => $_POST['fleet'] ?? $existing['fleet'] ?? '',
-  'device' => is_array($_POST['device']) ? array_filter($_POST['device']) : []
+  'ea_number'      => $_POST['ea_number'] ?? $existing['ea_number'] ?? '',
+  'revision'       => $_POST['revision'] ?? $existing['revision'] ?? '',
+  'fleet'          => $_POST['fleet'] ?? $existing['fleet'] ?? '',
+  'device'         => is_array($_POST['device']) ? array_filter($_POST['device']) : []
 ];
 
-// === HANDLE FILE UPLOADS ===
-$uploadDir = UPLOAD_DIR . '/SEA/' . $sea_id;
-if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+// === HANDLE ATTACHMENTS ===
+// Define paths
+$uploadDir = UPLOAD_DIR . '/SEA/' . $sea_id;  // e.g. /public/data/uploads/SEA/SEA-20251102-970
+$webBase   = '/data/uploads/SEA/' . $sea_id;  // Public URL base
 
-$attachments = $existing['attachments'] ?? [];
+if (!is_dir($uploadDir)) {
+  mkdir($uploadDir, 0755, true);
+}
+
+// 1. Get attachments to KEEP (from form: keep_attachments[])
+$keepAttachments = [];
+if (!empty($_POST['keep_attachments']) && is_array($_POST['keep_attachments'])) {
+  foreach ($_POST['keep_attachments'] as $url) {
+    // Validate: must start with $webBase
+    if (strpos($url, $webBase) === 0) {
+      $keepAttachments[] = $url;
+    }
+  }
+}
+
+// 2. Add NEW uploads
+$newAttachments = [];
 if (!empty($_FILES['attachments']['name'][0])) {
   foreach ($_FILES['attachments']['name'] as $k => $name) {
     if ($_FILES['attachments']['error'][$k] === UPLOAD_ERR_OK) {
       $ext = pathinfo($name, PATHINFO_EXTENSION);
       $safeName = time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-      $target = $uploadDir . '/' . $safeName;
-      if (move_uploaded_file($_FILES['attachments']['tmp_name'][$k], $target)) {
-        $attachments[] = $target;
+      $targetPath = $uploadDir . '/' . $safeName;
+      $webUrl = $webBase . '/' . $safeName;
+
+      if (move_uploaded_file($_FILES['attachments']['tmp_name'][$k], $targetPath)) {
+        $newAttachments[] = $webUrl;
       }
     }
   }
 }
-$sea['attachments'] = $attachments;
+
+// 3. Merge kept + new
+$sea['attachments'] = array_merge($keepAttachments, $newAttachments);
 
 // === SAVE JSON ===
-file_put_contents($jsonFile, json_encode($sea, JSON_PRETTY_PRINT));
+file_put_contents($jsonFile, json_encode($sea, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
 // === GENERATE PDF ===
 ob_clean();
@@ -75,7 +95,7 @@ function h($str)
 }
 
 // Parts Table
-$parts = json_decode($sea['parts_json'], true);
+$parts = json_decode($sea['parts_json'], true) ?? [];
 $partsHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">';
 $partsHtml .= '<tr style="background:#f8f9fa;"><th style="border:1px solid #ddd;padding:8px;">Part</th><th style="border:1px solid #ddd;padding:8px;">Desc</th><th style="border:1px solid #ddd;padding:8px;">Type</th><th style="border:1px solid #ddd;padding:8px;text-align:center;">Qty</th></tr>';
 foreach ($parts as $p) {
@@ -83,14 +103,26 @@ foreach ($parts as $p) {
 }
 $partsHtml .= '</table>';
 
-// Instructions Table
-$inst = json_decode($sea['instructions_json'], true);
+// Instructions Table (FIX: no 'party' field)
+$inst = json_decode($sea['instructions_json'], true) ?? [];
 $instHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">';
-$instHtml .= '<tr style="background:#f8f9fa;"><th style="border:1px solid #ddd;padding:8px;width:8%;">#</th><th style="border:1px solid #ddd;padding:8px;">Instruction</th><th style="border:1px solid #ddd;padding:8px;">Party</th><th style="border:1px solid #ddd;padding:8px;">Notes</th></tr>';
+$instHtml .= '<tr style="background:#f8f9fa;"><th style="border:1px solid #ddd;padding:8px;width:8%;">#</th><th style="border:1px solid #ddd;padding:8px;">Instruction</th><th style="border:1px solid #ddd;padding:8px;">Notes</th></tr>';
 foreach ($inst as $i => $row) {
-  $instHtml .= "<tr><td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td><td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br(h($row['instruction'])) . "</td><td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['party']) . "</td><td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['notes']) . "</td></tr>";
+  $instHtml .= "<tr><td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td><td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br(h($row['instruction'] ?? '')) . "</td><td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['notes'] ?? '') . "</td></tr>";
 }
 $instHtml .= '</table>';
+
+// Attachments in PDF
+$attachHtml = '';
+if (!empty($sea['attachments'])) {
+  $attachHtml = '<h2>Attachments</h2><ul style="font-size:11px;">';
+  foreach ($sea['attachments'] as $url) {
+    $filename = basename($url);
+    $fullUrl = 'http://' . $_SERVER['HTTP_HOST'] . $url;  // Adjust for HTTPS if needed
+    $attachHtml .= "<li><a href=\"{$fullUrl}\">{$filename}</a></li>";
+  }
+  $attachHtml .= '</ul>';
+}
 
 $html = '
 <!DOCTYPE html>
@@ -98,6 +130,7 @@ $html = '
     body { font-family: Arial; margin: 30px; font-size: 12px; }
     h1 { text-align: center; color: #2c3e50; }
     .label { font-weight: bold; width: 150px; display: inline-block; }
+    a { color: #0066cc; text-decoration: underline; }
 </style></head><body>
 <h1>Simulator Engineering Authorization (SEA)</h1>
 <p style="text-align:center;"><strong>Generated:</strong> ' . date('Y-m-d H:i:s') . '</p>
@@ -111,13 +144,33 @@ $html = '
 <p><span class="label">Justification:</span> ' . nl2br(h($sea['justification'])) . '</p>
 <p><span class="label">Impact:</span> ' . nl2br(h($sea['impact'])) . '</p>
 <p><span class="label">Priority:</span> ' . h($sea['priority']) . '</p>
-<p><span class="label">Target Date:</span> ' . h($sea['target_date']) . '</p><h2>Affected Parts</h2>
+<p><span class="label">Target Date:</span> ' . h($sea['target_date']) . '</p>
+<h2>Affected Parts</h2>
 ' . (empty($parts) ? '<p><em>None</em></p>' : $partsHtml) . '
 <h2>Work Instructions</h2>
 ' . (empty($inst) ? '<p><em>None</em></p>' : $instHtml) . '
+' . $attachHtml . '
 </body></html>';
 
 $mpdf = new Mpdf(['format' => 'A4']);
 $mpdf->WriteHTML($html);
+
+// Optional: Attach files to PDF
+if (!empty($sea['attachments'])) {
+  foreach ($sea['attachments'] as $url) {
+    $filePath = $_SERVER['DOCUMENT_ROOT'] . $url;
+    if (file_exists($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === 'pdf') {
+      $mpdf->AddPage();
+      $mpdf->SetImportUse();
+      $pageCount = $mpdf->SetSourceFile($filePath);
+      for ($i = 1; $i <= $pageCount; $i++) {
+        $tplId = $mpdf->ImportPage($i);
+        $mpdf->UseTemplate($tplId);
+        if ($i < $pageCount) $mpdf->AddPage();
+      }
+    }
+  }
+}
+
 $mpdf->Output('SEA-' . $sea['id'] . '.pdf', 'D');
 exit;
