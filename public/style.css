@@ -2,3 +2,66 @@ body { background:#f8f9fa; font-family:Segoe UI,Tahoma,sans-serif; }
 .container { max-width:860px; }
 .form-label { font-weight:600; }
 .card { box-shadow:0 .125rem .25rem rgba(0,0,0,.075); }
+
+    .choice-card {
+      cursor: pointer;
+      transition: .2s
+    }
+
+    .choice-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, .1)
+    }
+
+    .sea-card:hover {
+      background: #f8f9fa
+    }
+
+    .hidden {
+      display: none
+    }
+
+    .parts-table th,
+    .parts-table td,
+    .instr-table th,
+    .instr-table td {
+      vertical-align: middle
+    }
+
+    .parts-table input,
+    .parts-table textarea,
+    .instr-table input,
+    .instr-table textarea {
+      width: 100%;
+      border: none;
+      padding: 6px;
+    }
+
+    .select2-container {
+      width: 100% !important
+    }
+
+    #instrTable th:nth-child(2),
+    #instrTable td:nth-child(2) {
+      width: 75%;
+    }
+
+    #instrTable th:nth-child(3),
+    #instrTable td:nth-child(3) {
+      width: 20%;
+    }
+
+    #instrTable th:last-child,
+    #instrTable td:last-child {
+      width: 5%;
+    }
+
+    #instrTable .instr-text,
+    #instrTable .instr-notes {
+      width: 100%;
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .alert { border-radius: 8px; }
+    
