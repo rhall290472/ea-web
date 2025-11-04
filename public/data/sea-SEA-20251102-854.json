@@ -1,0 +1,33 @@
+{
+    "id": "SEA-20251102-854",
+    "requester": "Richard Hall",
+    "description": "The Thales Ka Band connectivity system provides the aircraft with satellite internet connectivity and a wireless local area network (LAN). This Engineering Authorization (EA) provides Maintenance with instructions to remove the Thales Ka system from the aircraft listed in this EA's effectivity. T",
+    "justification": "Remove Thales Ka (Gen 1) switches from the P5 overhead panel.",
+    "impact": "",
+    "priority": "Medium",
+    "target_date": "",
+    "timestamp": "2025-11-02 17:51:27",
+    "status": "Submitted",
+    "version": 2,
+    "parts_json": "[{\"part\":\"MS24658-23D\",\"desc\":\"'KA POWER ON/OFF' and 'KA GND TX ENABLE OVERRIDE/NORMAL'\",\"type\":\"Remove\",\"qty\":\"2\"},{\"part\":\"BACP20B43B\",\"desc\":\"Plug\",\"type\":\"Add\",\"qty\":\"2\"}]",
+    "instructions_json": "[{\"instruction\":\"P5 Panel Demodification\\nIf not already done, remove power from the simulator\\nGain access to the flight deck area P5 panel\\nCover the P5 panel and simulator wiring\\nCover the P8 and P9 panel\",\"notes\":\"\"},{\"instruction\":\"Remove the two (2) Thales Ka switches, 'KA POWER ON/OFF' and 'KA GND TX ENABLE OVERRIDE/NORMAL' (both P/N: MS24658-23D) from the P5 panel. Reference Thales drawing 187354, Sheet 5 (Detail E), Note 51.\",\"notes\":\"\"},{\"instruction\":\"Install two (2) plugs (P/N: P/N BACP20B43B), one in each hole, in accordance with Thales drawing 187354, Sheet 5 (Detail E).\",\"notes\":\"\"},{\"instruction\":\"Remove placards 'S9618' and 'S9619' from the AFT side of the P5 panel, if existing.\",\"notes\":\"\"},{\"instruction\":\"Remove placards 'KA SYSTEM CONTROL ON/OFF' and 'KA GND TX ENABLE OVERRIDE/NORMAL' from the front side of the P5 panel. Clean any placard residue from the area per BAC 5750 (or equivalent).\",\"notes\":\"\"},{\"instruction\":\"This EA also removes the circuit breakers from P6-1 and P6-4, but those breakers will be changed during the installation of the SatLink system.\",\"notes\":\"\"}]",
+    "ea_number": "4435-03977",
+    "revision": "G",
+    "fleet": "737",
+    "device": [
+        "FFS-2",
+        "FFS-3",
+        "FFS-4",
+        "FFS-5",
+        "FTD-1",
+        "FTD-2",
+        "FTD-3",
+        "FTD-4",
+        "FFS-6",
+        "FFS-7",
+        "FFS-8",
+        "FFS-9",
+        "FFS-10"
+    ],
+    "attachments": []
+}

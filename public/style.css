@@ -129,3 +129,9 @@ body {
 #siteFooter a:hover {
   text-decoration: underline;
 }
+
+/* Description on SEA cards */
+.sea-card .text-muted {
+    font-size: 0.92rem;
+    line-height: 1.4;
+}
