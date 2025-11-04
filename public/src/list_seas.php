@@ -57,7 +57,7 @@ CARD;
 $desc = $s['description'] ?? '';
 $shortDesc = strlen($desc) > 120 ? substr($desc, 0, 120) . '...' : $desc;
 
-echo '<p class="mb-2"><strong>Description:</strong> ';
+echo '<p class="mb-2"><strong>Title:</strong> ';
 echo '<span class="text-muted desc-short" ';
 echo 'data-full="' . h($desc) . '" ';  // Full text stored safely
 echo 'data-short="' . h($shortDesc) . '" ';  // Short version
