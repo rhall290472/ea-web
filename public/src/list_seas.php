@@ -38,8 +38,11 @@ if (empty($seas)) {
 } else {
   foreach ($seas as $s) {
     $dev = is_array($s['device']) ? implode(', ', $s['device']) : ($s['device'] ?? '—');
-    $status = $s['status'] ?? 'Submitted';
-    $badge = $status === 'Approved' ? 'success' : ($status === 'Rejected' ? 'danger' : 'warning');
+    $status = $s['status'] ?? 'Planning';  // UPDATED: Default to Planning
+    // UPDATED: Badge logic for new statuses
+    $badge = 'warning';  // Default for Planning
+    if ($status === 'In Work') $badge = 'primary';
+    elseif ($status === 'Completed') $badge = 'success';
 
     // Start heredoc (no <?=? inside)
     echo <<<CARD

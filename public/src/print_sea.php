@@ -152,7 +152,7 @@ $html = <<<HTML
     <p><span class="label">Fleet:</span> {{FLEET}}</p>
     <p><span class="label">Device(s):</span> {{DEVICES}}</p>
     <p><span class="label">Requester:</span> {{REQUESTER}}</p>
-
+    <p><span class="label">Status:</span> {{STATUS}}</p>  <!-- NEW: Status display -->
     
     <p><span class="label">Justification:</span><br>{{JUSTIFICATION}}</p>
     <p><span class="label">Impact:</span><br>{{IMPACT}}</p>
@@ -179,6 +179,7 @@ $replacements = [
   '{{FLEET}}'          => h($sea['fleet'] ?? '—'),
   '{{DEVICES}}'        => $deviceDisplay,
   '{{REQUESTER}}'      => h($sea['requester'] ?? '—'),
+  '{{STATUS}}'         => h($sea['status'] ?? 'Planning'),  // NEW
   '{{DESCRIPTION}}'    => nl2br_h($sea['description'] ?? '—'),
   '{{JUSTIFICATION}}'  => nl2br_h($sea['justification'] ?? '—'),
   '{{IMPACT}}'          => nl2br_h($sea['impact'] ?? '—'),
@@ -208,6 +209,7 @@ $mpdf->WriteHTML($html);
 // ------------------------------------------------------------------
 // 9. EMBED ATTACHED PDF FILES (if local)
 // ------------------------------------------------------------------
+/*
 if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
   foreach ($sea['attachments'] as $url) {
     // Only process local files (not external URLs)
@@ -236,7 +238,7 @@ if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
     }
   }
 }
-
+*/
 // ------------------------------------------------------------------
 // 10. OUTPUT
 // ------------------------------------------------------------------

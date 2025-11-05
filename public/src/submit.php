@@ -40,7 +40,7 @@ try {
         'priority'       => $_POST['priority'] ?? $existing['priority'] ?? 'Medium',
         'target_date'    => $_POST['target_date'] ?? $existing['target_date'] ?? '',
         'timestamp'      => date('Y-m-d H:i:s'),
-        'status'         => $existing['status'] ?? 'Submitted',
+        'status'         => $_POST['status'] ?? $existing['status'] ?? 'Planning',  // NEW: Handle status
         'version'        => ($existing['version'] ?? 0) + 1,
         'parts_json'     => $_POST['parts_json'] ?? $existing['parts_json'] ?? '[]',
         'instructions_json' => $_POST['instructions_json'] ?? $existing['instructions_json'] ?? '[]',
@@ -241,9 +241,8 @@ try {
         ]);
         $mpdf->WriteHTML($html);
         $pdfContent = $mpdf->Output('', 'S'); // Return as string
-
+/*
         // Optional: Embed local PDF attachments (uncomment if needed)
-        /*
         if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
             foreach ($sea['attachments'] as $url) {
                 if (strpos($url, 'http') !== 0) { // Local only
@@ -266,8 +265,7 @@ try {
             }
             $pdfContent = $mpdf->Output('', 'S');
         }
-        */
-
+*/
     } catch (Exception $e) {
         $pdfError = ' (PDF generation skipped: ' . $e->getMessage() . ')';
         error_log("PDF Error: " . $e->getMessage());

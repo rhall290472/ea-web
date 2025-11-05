@@ -21,7 +21,7 @@
     }
   </style>
 
-<!-- ====== CRITICAL: DEFINE FUNCTIONS FIRST ====== -->
+  <!-- ====== CRITICAL: DEFINE FUNCTIONS FIRST ====== -->
   <script>
     // GLOBAL: Must be defined BEFORE any inline onclick
     function loadExistingAttachments(attachments) {
@@ -181,6 +181,15 @@
         <div class="col-md-6">
           <label>Requester <span class="text-danger">*</span></label>
           <input type="text" class="form-control" name="requester" id="requester" required>
+        </div>
+        <div class="col-md-4"> <!-- NEW: Status Dropdown -->
+          <label>Status</label>
+          <select class="form-control" name="status" id="status">
+            <option value="Planning">Planning</option>
+            <option value="In Work">In Work</option>
+            <option value="Completed">Completed</option>
+            <option value="Completed">On Hold</option>
+          </select>
         </div>
         <div class="col-12">
           <label>Background</label>
@@ -517,6 +526,7 @@
             $('#impact').val(d.impact || '');
             $('#priority').val(d.priority || 'Medium');
             $('#target_date').val(d.target_date || '');
+            $('#status').val(d.status || 'Planning');  // NEW: Set status
 
             $('#partsTable tbody').empty();
             $('#instrTable tbody').empty();
@@ -547,7 +557,7 @@
           });
       };
 
-       // -------------------------------------------------
+      // -------------------------------------------------
       // SEARCH
       // -------------------------------------------------
       $('#searchInput').on('input', function () {
