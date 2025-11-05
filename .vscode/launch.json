@@ -11,7 +11,7 @@
       "port": 9003
     },
     {
-      "name": "Launch ea-web",
+      "name": "ea-web",
       "request": "launch",
       "type": "chrome",
       "url": "https://localhost/ea-web/public/index.html",
