@@ -1,0 +1,28 @@
+{
+    "id": "SEA-20251104-512",
+    "requester": "Richard Hall",
+    "description": "B737-800: LiveTV IFE System Removal",
+    "justification": "The 737-NG Customer Experience project reconfigures the interior of the 122 Boeing 737-NG (800) aircraft to install the Panasonic eX1 IFE system. The LiveTV Passenger Entertainment System is currently installed on the 218 Boeing 737-NG aircraft. This Engineering Authorization (EA) will remove the LiveTV IFE system from the 122 800 series 737 aircraft.",
+    "impact": "",
+    "priority": "Medium",
+    "target_date": "2025-12-30",
+    "timestamp": "2025-11-05 12:24:16",
+    "status": "Planning",
+    "version": 12,
+    "parts_json": "[{\"part\":\"MS24658-23D\",\"desc\":\"IFE Power Switch\",\"type\":\"Remove\",\"qty\":\"1\"},{\"part\":\"N40001-145\",\"desc\":\"IFE POWER ON OFF placard\",\"type\":\"Remove\",\"qty\":\"1\"},{\"part\":\"NSA939511-03\",\"desc\":\"Plug\",\"type\":\"Add\",\"qty\":\"2\"},{\"part\":\"N40001-143\",\"desc\":\"Placard\",\"type\":\"Remove\",\"qty\":\"1\"},{\"part\":\"6TC6-10\",\"desc\":\"Circuit Breakers IFE AC POWER 1, IFE AC POWER 2\",\"type\":\"Remove\",\"qty\":\"2\"},{\"part\":\"2TC49-3\",\"desc\":\"Circuit Breaker IFE DC CONTROL\",\"type\":\"Remove\",\"qty\":\"1\"},{\"part\":\"NSA939511-03\",\"desc\":\"Plug\",\"type\":\"Add\",\"qty\":\"3\"},{\"part\":\"N40001-457\",\"desc\":\"Label Cover\",\"type\":\"Add\",\"qty\":\"1\"},{\"part\":\"N40001-065\",\"desc\":\"Placard\",\"type\":\"Remove\",\"qty\":\"1\"}]",
+    "instructions_json": "[{\"instruction\":\"P5 PILOT OVERHEAD PANEL\\n\\nRemove IFE Power Switch P/N MS24658-23D (S9624) from Cockpit Switch Panel. \\n\\nRemove Placard 'IFE POWER ON OFF' P/N N40001-145 from the P5 panel. and discard locally. \\nReference Thales Drawing 188139 SH 5, Detail H. \\n\\nInstall Plug (P/N NSA939511-03)\u2014reference Thales Drawing 188139 SH 5, Detail H.\\n\\nInside the P5 panel, remove Placard P/N N40001-143 (S9624) and discard locally\u2014reference Thales Drawing 188139 SH 5, Detail H.\",\"notes\":\"\"},{\"instruction\":\"P6-1 PANEL\\n\\nUnwrap daisy-chained wires  from (circuit breakers located at):\\nTODO:\",\"notes\":\"\"},{\"instruction\":\"Remove quantity 2 circuit breaker, P/N 6TC6-10, (IFE AC POWER 1, IFE AC POWER 2).\\n\\nRemove quantity 1 circuit breaker, P/N 2TC49-3, (IFE DC CONTROL). \\n\\nDiscard removed items locally\u2014reference Thales Drawing 188139 SH 5, Detail F and Flag Note 52.\\n\\nInstall three (3) plugs (P/N NSA939511-03) and three (3) Label Cover (P/N N40001-457) at locations where circuit breakers were removed\u2014reference Thales Drawing 188139 SH 5, Detail H and Flag Note 5.\",\"notes\":\"\"},{\"instruction\":\"P6-4 PANEL\\n\\nUnwrap daisy-chained wires  from (circuit breakers located at):\\nB11-1 to B12-1\\nB12-1 to B14-1\\n\\nAdd wirewrap from B11-1 to B14-1 per dwg 368911-035/036\\n\\nUnwrap daisy-chained wires  from (circuit breakers located at):\\nA1J1-47 to B12-2\\nB12-2 to C12-2\\n\\nAdd wirewrap from A1J1-47 to C12-2 per dwg 368911-036\",\"notes\":\"\"},{\"instruction\":\"Remove Circuit Breaker(B12) P/N 2TC49-5 (IFE DC BUS) and discard locally. \\n\\nInstall Plug (P/N NSA939511-03) and Label Cover (P/N N40001-457)\u2014reference Thales Drawing 188139 SH 5, Detail G and Flag Notes 51 and 52.\\n\\nInside P6-4 panel, remove placard, C9203 (P/N N40001-065) and discard. Reference Thales Drawing 188139 SH 5, Detail G and Flag Note 51.\",\"notes\":\"\"},{\"instruction\":\"Ensure the work area is clean and clear of tools and debris.\",\"notes\":\"\"}]",
+    "ea_number": "4420-03686",
+    "revision": "J",
+    "fleet": "737",
+    "device": [
+        "FFS-2",
+        "FFS-3",
+        "FFS-4",
+        "FFS-5",
+        "FFS-6",
+        "FTD-2",
+        "FTD-3",
+        "FTD-4"
+    ],
+    "attachments": []
+}
