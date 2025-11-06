@@ -170,6 +170,13 @@ $html = <<<HTML
 </html>
 HTML;
 
+// Helper: safely allow basic HTML in rich text fields
+function allow_html($s) {
+    $s = $s ?? '—';
+    // Optionally sanitize if untrusted input (use HTMLPurifier), but for now:
+    return $s;
+}
+
 // Replace placeholders
 $replacements = [
   '{{DATE}}'           => date('Y-m-d H:i:s'),
@@ -181,7 +188,7 @@ $replacements = [
   '{{REQUESTER}}'      => h($sea['requester'] ?? '—'),
   '{{STATUS}}'         => h($sea['status'] ?? 'Planning'),  // NEW
   '{{DESCRIPTION}}'    => nl2br_h($sea['description'] ?? '—'),
-  '{{JUSTIFICATION}}'  => nl2br_h($sea['justification'] ?? '—'),
+  '{{JUSTIFICATION}}'  => allow_html($sea['justification'] ?? '—'),
   '{{IMPACT}}'          => nl2br_h($sea['impact'] ?? '—'),
   '{{PRIORITY}}'       => h($sea['priority'] ?? '—'),
   '{{TARGET_DATE}}'    => h($sea['target_date'] ?? '—'),
