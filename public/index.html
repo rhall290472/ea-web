@@ -438,6 +438,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
         $('#createForm').prepend(alert);
+        $('html, body').animate({ scrollTop: 0 }, 300);
       }
 
       function downloadPdf(base64, filename) {
