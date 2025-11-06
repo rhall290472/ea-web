@@ -406,9 +406,15 @@
           contentType: false,
           dataType: 'json',
           success: function (res) {
+            if (res.conflict) {  // NEW: Handle conflicts
+              if (confirm(res.message)) {
+                formData.append('overwrite', '1');
+                $.ajax(this);  // Resubmit with same settings
+              }
+              return;
+            }
             if (res.success) {
               showAlert('success', res.message);
-              if (res.pdf) downloadPdf(res.pdf, res.pdf_name);
               if ($('#sea_action').val() === 'create') {
                 $('#sea_id').val(res.sea_id);
                 $('#display_id').val(res.sea_id);
@@ -417,6 +423,9 @@
                 $('#submitBtn').text('Update SEA');
                 history.replaceState(null, null, '?id=' + res.sea_id);
               }
+              loadExistingAttachments(res.attachments);  // NEW: Update attachments list after success
+              $('#attachments').val('');  // NEW: Clear file input
+              // if (res.pdf) downloadPdf(res.pdf, res.pdf_name);  // If PDF is in response
             } else {
               showAlert('danger', res.message || 'Unknown error');
             }
