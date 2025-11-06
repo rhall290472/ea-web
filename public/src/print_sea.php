@@ -111,6 +111,21 @@ if (!empty($sea['device'])) {
   $deviceDisplay = '—';
 }
 
+// Helper: safely allow basic HTML in rich text fields + convert newlines
+function allow_html($s)
+{
+  $s = $s ?? '—';
+  // Convert newlines to <br> first (before any existing HTML)
+  $s = nl2br($s);
+  // If you want to sanitize (recommended for untrusted input):
+  // Require HTMLPurifier via Composer, then:
+  // $purifier = new HTMLPurifier();
+  // return $purifier->purify($s);
+  // Allowed tags: p, br, b, i, u, strong, em, ul, ol, li, etc.
+  return $s;  // Raw with <br> added; tags from input will render
+}
+
+
 // ------------------------------------------------------------------
 // 7. FINAL HTML
 // ------------------------------------------------------------------
@@ -170,12 +185,6 @@ $html = <<<HTML
 </html>
 HTML;
 
-// Helper: safely allow basic HTML in rich text fields
-function allow_html($s) {
-    $s = $s ?? '—';
-    // Optionally sanitize if untrusted input (use HTMLPurifier), but for now:
-    return $s;
-}
 
 // Replace placeholders
 $replacements = [
