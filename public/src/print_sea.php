@@ -213,12 +213,28 @@ $html = str_replace(array_keys($replacements), array_values($replacements), $htm
 // ------------------------------------------------------------------
 ob_clean();
 $mpdf = new Mpdf([
-  'format' => 'A4',
+  'format' => 'Letter',
   'margin_left' => 15,
   'margin_right' => 15,
-  'margin_top' => 20,
-  'margin_bottom' => 20,
+  'margin_top' => 30,  // Increased to make space for header
+  'margin_bottom' => 30,  // Increased to make space for footer
+  'margin_header' => 10,  // Space between header and body
+  'margin_footer' => 10,  // Space between footer and body
 ]);
+
+// Set Header (with image - replace 'path/to/logo.png' with your actual image path)
+$header = '
+<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">  <!-- Adjust width as needed -->
+</div>';
+$mpdf->SetHTMLHeader($header);
+
+// Set Footer (page x of x and SEA version)
+$footer = '
+<div style="text-align: right; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
+    Page {PAGENO} of {nbpg} | Version: ' . h($sea['version'] ?? '1') . '
+</div>';
+$mpdf->SetHTMLFooter($footer);
 
 $mpdf->WriteHTML($html);
 
