@@ -145,3 +145,10 @@ body {
   overflow: hidden;
   /* Hide scrollbars */
 }
+
+#conflictList code {
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
