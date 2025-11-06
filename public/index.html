@@ -20,7 +20,8 @@
       /* same as original */
     }
   </style>
-
+  <script src="https://cdn.tiny.cloud/1/h9xs5cld1bkmamb6zycl5ymhfanahso689gglclrgt5gldlx/tinymce/7/tinymce.min.js"
+    referrerpolicy="origin"></script>
   <!-- ====== CRITICAL: DEFINE FUNCTIONS FIRST ====== -->
   <script>
     // GLOBAL: Must be defined BEFORE any inline onclick
@@ -278,8 +279,49 @@
 
   <script>
     // -------------------------------------------------
+    // Small HTML-escape helper used in templates
+    function h(s) {
+      if (s === null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     // AUTO-RESIZE TEXTAREA (Instruction field)
     // -------------------------------------------------
+    // TinyMCE – initialise only on the instruction textarea
+    // -------------------------------------------------
+    tinymce.init({
+      selector: '#instrTable .instr-text',          // target every instruction textarea
+      height: 80,
+      menubar: false,
+      plugins: 'lists link image table code autoresize',
+      toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
+  branding: false,
+  statusbar: true,
+      // allow manual resize and enable autoresize plugin to auto-grow the editor
+      resize: true,
+      autoresize_bottom_margin: 12,
+      setup: function (editor) {
+        // keep the hidden textarea in sync (TinyMCE does this automatically)
+        editor.on('change keyup', function () {
+          editor.save();                       // write HTML back to <textarea>
+          // keep legacy textarea sizing logic (harmless) in case TinyMCE is removed
+          try { autoResizeTextarea(editor.getElement()); } catch (e) { /* noop */ }
+        });
+      }
+    });
+
+    // -------------------------------------------------
+    // Existing auto-resize (unchanged, works with TinyMCE HTML)
+    // -------------------------------------------------
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = (el.scrollHeight) + 'px';
+    }
     function autoResizeTextarea(el) {
       el.style.height = 'auto';                     // allow shrinking
       el.style.height = el.scrollHeight + 'px';     // fit content
@@ -306,6 +348,14 @@
       // -------------------------------------------------
       $('#fleet').select2({ placeholder: "Select Fleet", allowClear: true });
       $('#device').select2({ placeholder: "Select Device(s)", allowClear: true });
+
+      // -------------------------------------------------
+      // AUTOSIZE: justification textarea
+      // -------------------------------------------------
+      // auto-resize as the user types
+      $('#justification').on('input', function () {
+        autoResizeTextarea(this);
+      });
 
       // -------------------------------------------------
       // FLEET → DEVICE POPULATION
@@ -338,297 +388,351 @@
       // INSTRUCTION ROW (with auto-resize)
       // -------------------------------------------------
       window.addInstrRow = function (data = {}) {
-        const row = `<tr>
-          <td class="step-num">${stepCounter++}</td>
-          <td><textarea class="form-control instr-text" placeholder="Enter instruction...">${data.instruction || ''}</textarea></td>
-          <td><input type="text" class="form-control instr-notes" placeholder="Notes" value="${data.notes || ''}"></td>
-          <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
-        </tr>`;
+        const idx = $('#instrTable tbody tr').length;
+        const row = `
+    <tr>
+      <td class="text-center align-middle">${idx + 1}</td>
+      <td>
+        <textarea class="form-control instr-text" name="instructions[${idx}][instruction]"
+                  placeholder="Enter instruction..." rows="1">${(data.instruction || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+      </td>
+      <td>
+   <input type="text" class="form-control instr-notes" name="instructions[${idx}][notes]"
+     value="${h(data.notes || '')}" placeholder="Notes">
+      </td>
+      <td class="text-center align-middle">
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeInstrRow(this)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </td>
+    </tr>`;
         $('#instrTable tbody').append(row);
 
-        // Resize if there is already content (e.g., edit mode)
-        const ta = $('#instrTable tbody tr:last-child .instr-text')[0];
-        if (ta && ta.value) autoResizeTextarea(ta);
-      };
+        // Initialise TinyMCE on the *new* textarea
+        tinymce.init({
+          // Use valid CSS selector (:last is jQuery-only); use :last-child for native querySelectorAll
+          selector: `#instrTable tbody tr:last-child .instr-text`,
+          height: 80,
+          menubar: false,
+          plugins: 'lists link image table code autoresize',
+          toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
+          branding: false,
+          statusbar: true,
+          resize: true,
+          autoresize_bottom_margin: 12,
+          setup: ed => {
+            ed.on('change keyup', () => {
+              ed.save();
+              try { autoResizeTextarea(ed.getElement()); } catch (e) { }
+            });
+          }
+        });
+        // end of addInstrRow - close the function so subsequent handlers are at document-ready scope
+      }
 
-      // Resize on typing (delegated)
-      $('#instrTable tbody').on('input', '.instr-text', function () {
-        autoResizeTextarea(this);
-      });
-
-      // -------------------------------------------------
-      // REMOVE ROW (update step numbers)
-      // -------------------------------------------------
-      $(document).on('click', '.remove-row', function () {
-        $(this).closest('tr').remove();
-        $('#instrTable tbody .step-num').each((i, el) => $(el).text(i + 1));
-        stepCounter = $('#instrTable tbody tr').length + 1;
-      });
-
-      // -------------------------------------------------
-      // FORM SUBMIT
-      // -------------------------------------------------
-      $('#seaForm').on('submit', function (e) {
-        e.preventDefault();
-        const $form = $(this);
-        const $btn = $('#submitBtn');
-        $btn.prop('disabled', true).text('Saving...');
-
-        // Clear old alerts
-        $('.alert').remove();
-
-        // Collect form data
-        const formData = new FormData(this);
-        formData.set('parts_json', JSON.stringify(getParts()));
-        formData.set('instructions_json', JSON.stringify(getInstructions()));
-
-        // First, try submit
-        $.ajax({
-          url: './src/submit.php',
-          method: 'POST',
-          data: formData,
-          processData: false,
-          contentType: false,
-          dataType: 'json',
-          success: function (res) {
-            if (res.conflict) {
-              // SHOW MODAL with conflict list
-              const $list = $('#conflictList').empty();
-              res.conflicting_files.forEach(f => {
-                $list.append(`<li><code>${f}</code></li>`);
-              });
-
-              const modal = new bootstrap.Modal('#overwriteModal');
-              $('#confirmOverwrite').off('click').on('click', function () {
-                modal.hide();
-                // Resubmit with overwrite flag
-                res.conflicting_files.forEach(f => {
-                  formData.append('overwrite[]', f);
-                });
-                $btn.prop('disabled', true).text('Overwriting...');
-                $.ajax({
-                  url: './src/submit.php',
-                  method: 'POST',
-                  data: formData,
-                  processData: false,
-                  contentType: false,
-                  dataType: 'json',
-                  success: handleSuccess,
-                  error: handleError
-                });
-              });
-              modal.show();
-              $btn.prop('disabled', false).text(
-                $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-              );
-            } else {
-              handleSuccess(res);
-            }
-          },
-          error: handleError
+        // -------------------------------------------------
+        // REMOVE ROW (update step numbers)
+        // (bind once at document-ready scope, not on every row add)
+        // -------------------------------------------------
+        $(document).on('click', '.remove-row', function () {
+          $(this).closest('tr').remove();
+          $('#instrTable tbody .step-num').each((i, el) => $(el).text(i + 1));
+          stepCounter = $('#instrTable tbody tr').length + 1;
         });
 
-        function handleSuccess(res) {
-          if (res.success) {
-            showAlert('success', res.message);
-            $('html, body').animate({ scrollTop: 0 }, 300);
+        // -------------------------------------------------
+        // FORM SUBMIT
+        // -------------------------------------------------
+        $('#seaForm').on('submit', function (e) {
+          e.preventDefault();
+          const $form = $(this);
+          const $btn = $('#submitBtn');
+          $btn.prop('disabled', true).text('Saving...');
 
-            if ($('#sea_action').val() === 'create') {
-              $('#sea_id').val(res.sea_id);
-              $('#display_id').val(res.sea_id);
-              $('#sea_action').val('update');
-              $('#formTitle').text('Edit SEA – ' + res.sea_id);
-              $('#submitBtn').text('Update SEA');
-              history.replaceState(null, null, '?id=' + res.sea_id);
+          // Clear old alerts
+          $('.alert').remove();
+
+          // Collect form data
+          const formData = new FormData(this);
+          formData.set('parts_json', JSON.stringify(getParts()));
+          formData.set('instructions_json', JSON.stringify(getInstructions()));
+
+          // First, try submit
+          $.ajax({
+            url: './src/submit.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function (res) {
+              if (res.conflict) {
+                // SHOW MODAL with conflict list
+                const $list = $('#conflictList').empty();
+                res.conflicting_files.forEach(f => {
+                  $list.append(`<li><code>${f}</code></li>`);
+                });
+
+                const modal = new bootstrap.Modal('#overwriteModal');
+                $('#confirmOverwrite').off('click').on('click', function () {
+                  modal.hide();
+                  // Resubmit with overwrite flag
+                  res.conflicting_files.forEach(f => {
+                    formData.append('overwrite[]', f);
+                  });
+                  $btn.prop('disabled', true).text('Overwriting...');
+                  $.ajax({
+                    url: './src/submit.php',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: handleSuccess,
+                    error: handleError
+                  });
+                });
+                modal.show();
+                $btn.prop('disabled', false).text(
+                  $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+                );
+              } else {
+                handleSuccess(res);
+              }
+            },
+            error: handleError
+          });
+
+          function handleSuccess(res) {
+            if (res.success) {
+              showAlert('success', res.message);
+              $('html, body').animate({ scrollTop: 0 }, 300);
+
+              if ($('#sea_action').val() === 'create') {
+                $('#sea_id').val(res.sea_id);
+                $('#display_id').val(res.sea_id);
+                $('#sea_action').val('update');
+                $('#formTitle').text('Edit SEA – ' + res.sea_id);
+                $('#submitBtn').text('Update SEA');
+                history.replaceState(null, null, '?id=' + res.sea_id);
+              }
+
+              // Refresh attachments list
+              loadExistingAttachments(res.attachments || []);
+
+              // Optional: auto-download PDF
+              // if (res.pdf) downloadPdf(res.pdf, res.pdf_name);
+            } else {
+              showAlert('danger', res.message || 'Unknown error');
             }
-
-            // Refresh attachments list
-            loadExistingAttachments(res.attachments || []);
-
-            // Optional: auto-download PDF
-            // if (res.pdf) downloadPdf(res.pdf, res.pdf_name);
-          } else {
-            showAlert('danger', res.message || 'Unknown error');
+            $btn.prop('disabled', false).text(
+              $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+            );
           }
-          $btn.prop('disabled', false).text(
-            $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-          );
-        }
 
-        function handleError(xhr) {
-          showAlert('danger', xhr.responseJSON?.message || 'Network error');
-          $btn.prop('disabled', false).text(
-            $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-          );
-        }
-      });
-      function showAlert(type, message) {
-        const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+          function handleError(xhr) {
+            showAlert('danger', xhr.responseJSON?.message || 'Network error');
+            $btn.prop('disabled', false).text(
+              $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+            );
+          }
+        });
+
+        
+        function showAlert(type, message) {
+          const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
           ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
-        $('#createForm').prepend(alert);
-        $('html, body').animate({ scrollTop: 0 }, 300);
-      }
-
-      function downloadPdf(base64, filename) {
-        const link = document.createElement('a');
-        link.href = 'data:application/pdf;base64,' + base64;
-        link.download = filename;
-        link.click();
-      }
-
-      // -------------------------------------------------
-      // NAVIGATION
-      // -------------------------------------------------
-      window.showCreateForm = function () {
-        hideAll();
-        $('#createForm').removeClass('hidden');
-        if (!$('#sea_id').val()) {
-          $('#sea_action').val('create');
-          $('#formTitle').text('New SEA');
-          $('#submitBtn').text('Create SEA');
-          stepCounter = 1;
-          $('#partsTable tbody').empty();
-          $('#instrTable tbody').empty();
-          $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
-          addPartRow();
-          addInstrRow();
+          $('#createForm').prepend(alert);
+          $('html, body').animate({ scrollTop: 0 }, 300);
         }
-      };
 
-      window.showSeaList = function () {
-        hideAll();
-        $('#listView').removeClass('hidden');
-        loadSeaList();
-      };
+        function downloadPdf(base64, filename) {
+          const link = document.createElement('a');
+          link.href = 'data:application/pdf;base64,' + base64;
+          link.download = filename;
+          link.click();
+        }
 
-      window.goBack = function () {
-        hideAll();
-        $('#choiceScreen').removeClass('hidden');
-        history.replaceState(null, null, window.location.pathname);
-      };
-
-      function hideAll() {
-        $('#choiceScreen, #createForm, #listView').addClass('hidden');
-      }
-
-      // -------------------------------------------------
-      // LIST & EDIT
-      // -------------------------------------------------
-      function loadSeaList() {
-        const $c = $('#seaContainer');
-        $c.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
-        fetch('./src/list_seas.php')
-          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-          .then(html => $c.html(html))
-          .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
-      }
-
-      window.deleteSea = function (id) {
-        if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
-        const f = document.createElement('form');
-        f.method = 'POST'; f.action = './src/delete.php'; f.style.display = 'none';
-        const i = document.createElement('input');
-        i.type = 'hidden'; i.name = 'filename'; i.value = `sea-${id}.json`;
-        f.appendChild(i); document.body.appendChild(f); f.submit();
-      };
-
-      window.editSea = function (id) {
-        showCreateForm();
-        $('#sea_action').val('update');
-        $('#sea_id').val(id);
-        $('#display_id').val(id);
-        $('#formTitle').text('Edit SEA – ' + id);
-        $('#submitBtn').text('Update SEA');
-
-        fetch(`data/sea-${id}.json`)
-          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-          .then(d => {
-            $('#ea_number').val(d.ea_number || '');
-            $('#revision').val(d.revision || '');
-            $('#requester').val(d.requester || '');
-            $('#description').val(d.description || '');
-            $('#justification').val(d.justification || '');
-            $('#impact').val(d.impact || '');
-            $('#priority').val(d.priority || 'Medium');
-            $('#target_date').val(d.target_date || '');
-            $('#status').val(d.status || 'Planning');  // NEW: Set status
-
+        // -------------------------------------------------
+        // NAVIGATION
+        // -------------------------------------------------
+        window.showCreateForm = function () {
+          hideAll();
+          $('#createForm').removeClass('hidden');
+          if (!$('#sea_id').val()) {
+            $('#sea_action').val('create');
+            $('#formTitle').text('New SEA');
+            $('#submitBtn').text('Create SEA');
+            stepCounter = 1;
             $('#partsTable tbody').empty();
             $('#instrTable tbody').empty();
-            stepCounter = 1;
-            (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
-            (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
+            $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
+            addPartRow();
+            addInstrRow();
+              // ensure justification textarea is reset and sized
+              $('#justification').val('');
+              try { autoResizeTextarea(document.getElementById('justification')); } catch (e) { }
+          }
+        };
 
-            // ---- RESIZE ALL INSTRUCTION TEXTAREAS AFTER LOAD ----
-            setTimeout(() => {
-              $('#instrTable .instr-text').each(function () {
-                autoResizeTextarea(this);
-              });
-            }, 50);
+        window.showSeaList = function () {
+          hideAll();
+          $('#listView').removeClass('hidden');
+          loadSeaList();
+        };
 
-            loadExistingAttachments(d.attachments || []);
+        window.goBack = function () {
+          hideAll();
+          $('#choiceScreen').removeClass('hidden');
+          history.replaceState(null, null, window.location.pathname);
+        };
 
-            const savedFleet = d.fleet || '';
-            const savedDevices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
+        function hideAll() {
+          $('#choiceScreen, #createForm, #listView').addClass('hidden');
+        }
 
-            $('#fleet').val(savedFleet).trigger('change');
-            setTimeout(() => {
-              $('#device').val(savedDevices).trigger('change');
-            }, 100);
-          })
-          .catch(err => {
-            console.error(err);
-            showAlert('danger', 'Failed to load SEA: ' + err.message);
+        // -------------------------------------------------
+        // LIST & EDIT
+        // -------------------------------------------------
+        function loadSeaList() {
+          const $c = $('#seaContainer');
+          $c.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
+          fetch('./src/list_seas.php')
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+            .then(html => $c.html(html))
+            .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
+        }
+
+        window.deleteSea = function (id) {
+          if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
+          const f = document.createElement('form');
+          f.method = 'POST'; f.action = './src/delete.php'; f.style.display = 'none';
+          const i = document.createElement('input');
+          i.type = 'hidden'; i.name = 'filename'; i.value = `sea-${id}.json`;
+          f.appendChild(i); document.body.appendChild(f); f.submit();
+        };
+
+        window.editSea = function (id) {
+          showCreateForm();
+          $('#sea_action').val('update');
+          $('#sea_id').val(id);
+          $('#display_id').val(id);
+          $('#formTitle').text('Edit SEA – ' + id);
+          $('#submitBtn').text('Update SEA');
+
+          fetch(`data/sea-${id}.json`)
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(d => {
+              $('#ea_number').val(d.ea_number || '');
+              $('#revision').val(d.revision || '');
+              $('#requester').val(d.requester || '');
+              $('#description').val(d.description || '');
+              $('#justification').val(d.justification || '');
+              // resize the justification textarea to fit loaded content
+              setTimeout(() => { try { autoResizeTextarea(document.getElementById('justification')); } catch (e) { } }, 50);
+              $('#impact').val(d.impact || '');
+              $('#priority').val(d.priority || 'Medium');
+              $('#target_date').val(d.target_date || '');
+              $('#status').val(d.status || 'Planning');  // NEW: Set status
+
+              $('#partsTable tbody').empty();
+              $('#instrTable tbody').empty();
+              stepCounter = 1;
+              (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
+              (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
+
+              // ---- RESIZE ALL INSTRUCTION TEXTAREAS AFTER LOAD ----
+              // inside editSea() after the forEach that adds rows:
+              setTimeout(() => {
+                // (re)-initialise TinyMCE on every instruction textarea
+                tinymce.remove('#instrTable .instr-text');   // clean any stray editors
+                tinymce.init({
+                  selector: '#instrTable .instr-text',
+                  height: 80,
+                  menubar: false,
+                  plugins: 'lists link image table code autoresize',
+                  toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
+                  branding: false,
+                  statusbar: true,
+                  resize: true,
+                  autoresize_bottom_margin: 12,
+                  setup: ed => {
+                    ed.on('change keyup', () => {
+                      ed.save();
+                      try { autoResizeTextarea(ed.getElement()); } catch (e) { }
+                    });
+                  }
+                });
+
+                // resize every textarea to fit its (now rich) content
+                $('#instrTable .instr-text').each(function () {
+                  autoResizeTextarea(this);
+                });
+              }, 150);
+
+              loadExistingAttachments(d.attachments || []);
+
+              const savedFleet = d.fleet || '';
+              const savedDevices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
+
+              $('#fleet').val(savedFleet).trigger('change');
+              setTimeout(() => {
+                $('#device').val(savedDevices).trigger('change');
+              }, 100);
+            })
+            .catch(err => {
+              console.error(err);
+              showAlert('danger', 'Failed to load SEA: ' + err.message);
+            });
+        };
+
+        // -------------------------------------------------
+        // SEARCH
+        // -------------------------------------------------
+        $('#searchInput').on('input', function () {
+          const term = this.value.toLowerCase();
+          $('.sea-card').each(function () {
+            const txt = this.textContent.toLowerCase();
+            $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
           });
-      };
+        });
 
-      // -------------------------------------------------
-      // SEARCH
-      // -------------------------------------------------
-      $('#searchInput').on('input', function () {
-        const term = this.value.toLowerCase();
-        $('.sea-card').each(function () {
-          const txt = this.textContent.toLowerCase();
-          $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
+        // -------------------------------------------------
+        // STARTUP
+        // -------------------------------------------------
+        hideAll();
+        $('#choiceScreen').removeClass('hidden');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('id');
+        if (editId) editSea(editId);
+
+        // Click-to-expand for SEA descriptions
+        document.addEventListener('click', function (e) {
+          if (e.target.classList.contains('expand-desc')) {
+            e.preventDefault();
+            const shortSpan = e.target.previousElementSibling;
+            const fullText = shortSpan.dataset.full;
+            const shortText = shortSpan.dataset.short;
+
+            if (shortSpan.dataset.expanded) {
+              // Collapse
+              shortSpan.innerHTML = shortText;
+              shortSpan.style = 'max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;';
+              e.target.innerHTML = '[show more]';
+              delete shortSpan.dataset.expanded;
+            } else {
+              // Expand
+              shortSpan.innerHTML = fullText;
+              shortSpan.style = '';
+              e.target.innerHTML = '[show less]';
+              shortSpan.dataset.expanded = '1';
+            }
+          }
         });
       });
-
-      // -------------------------------------------------
-      // STARTUP
-      // -------------------------------------------------
-      hideAll();
-      $('#choiceScreen').removeClass('hidden');
-
-      const urlParams = new URLSearchParams(window.location.search);
-      const editId = urlParams.get('id');
-      if (editId) editSea(editId);
-
-      // Click-to-expand for SEA descriptions
-      document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('expand-desc')) {
-          e.preventDefault();
-          const shortSpan = e.target.previousElementSibling;
-          const fullText = shortSpan.dataset.full;
-          const shortText = shortSpan.dataset.short;
-
-          if (shortSpan.dataset.expanded) {
-            // Collapse
-            shortSpan.innerHTML = shortText;
-            shortSpan.style = 'max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;';
-            e.target.innerHTML = '[show more]';
-            delete shortSpan.dataset.expanded;
-          } else {
-            // Expand
-            shortSpan.innerHTML = fullText;
-            shortSpan.style = '';
-            e.target.innerHTML = '[show less]';
-            shortSpan.dataset.expanded = '1';
-          }
-        }
-      });
-    });
 
     // -------------------------------------------------
     // COLLECT PARTS DATA
@@ -660,7 +764,14 @@
         });
       });
       return instructions;
-    }    
+    }
+
+    window.removeInstrRow = function (btn) {
+      const editorId = tinymce.get($(btn).closest('tr').find('.instr-text').attr('id'));
+      if (editorId) tinymce.remove(editorId);
+      $(btn).closest('tr').remove();
+      renumberInstr();
+    };
   </script>
 
   <!-- Overwrite Confirmation Modal -->
