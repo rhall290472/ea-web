@@ -76,8 +76,8 @@ $instHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;fon
 foreach ($inst as $i => $row) {
   $instHtml .= "<tr>
         <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['instruction'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['notes'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . allow_html($row['instruction'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['notes'] ?? '') . "</td>
     </tr>";
 }
 $instHtml .= '</tbody></table>';
