@@ -35,10 +35,14 @@ usort($seas, fn($a, $b) => strtotime($b['timestamp']) - strtotime($a['timestamp'
             <div class="card h-100 shadow-sm">
               <div class="card-header d-flex justify-content-between align-items-center">
                 <strong><?= h($s['id']) ?></strong>
-                <span class="badge bg-<?=
-                                      ($s['status'] ?? 'Planning') === 'Completed' ? 'success' : (($s['status'] ?? 'Planning') === 'In Work' ? 'primary' : 'warning')  // UPDATED: Badge logic
-                                      ?>">
-                  <?= h($s['status'] ?? 'Planning') ?> // UPDATED: Default
+                <span class="badge bg-<?= match ($s['status'] ?? 'Planning') {
+                                        'Completed' => 'success',
+                                        'In Work'   => 'primary',
+                                        'Planning'  => 'warning',
+                                        'On Hold'   => 'danger',
+                                        default     => 'dark'
+                                      } ?>">
+                  <?= h($s['status'] ?? 'Planning') ?>
                 </span>
               </div>
               <div class="card-body">

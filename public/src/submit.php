@@ -22,7 +22,14 @@ try {
   $sea_id = $_POST['sea_id'] ?? '';
 
   if ($action === 'create' && empty($sea_id)) {
-    $sea_id = 'SEA-' . date('Ymd') . '-' . substr(str_shuffle('0123456789'), 0, 3);
+    $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
+    $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet); // Sanitize: only uppercase letters/numbers
+    if ($fleet === '') $fleet = 'UNKNOWN';
+
+    $datePart = date('Ymd');
+    $randomPart = substr(str_shuffle('0123456789'), 0, 3);
+
+    $sea_id = "SEA-{$fleet}-{$datePart}-{$randomPart}";
   }
 
   $jsonFile = DATA_DIR . '/sea-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea_id) . '.json';

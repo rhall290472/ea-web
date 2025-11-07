@@ -38,11 +38,14 @@ if (empty($seas)) {
 } else {
   foreach ($seas as $s) {
     $dev = is_array($s['device']) ? implode(', ', $s['device']) : ($s['device'] ?? '—');
-    $status = $s['status'] ?? 'Planning';  // UPDATED: Default to Planning
-    // UPDATED: Badge logic for new statuses
-    $badge = 'warning';  // Default for Planning
-    if ($status === 'In Work') $badge = 'primary';
-    elseif ($status === 'Completed') $badge = 'success';
+    $status = $s['status'] ?? 'Planning';
+    $colors = [
+      'Planning'  => 'warning',
+      'In Work'   => 'primary',
+      'Completed' => 'success',
+      'On Hold'   => 'danger'  // RED
+    ];
+    $badge = $colors[$status] ?? 'dark';
 
     // Start heredoc (no <?=? inside)
     echo <<<CARD
@@ -56,24 +59,24 @@ if (empty($seas)) {
                     <p><strong>EA#:</strong> {$s['ea_number']}</p>
 CARD;
 
-// === DESCRIPTION: Click to expand (SAFE & WORKING) ===
-$desc = $s['description'] ?? '';
-$shortDesc = strlen($desc) > 120 ? substr($desc, 0, 120) . '...' : $desc;
+    // === DESCRIPTION: Click to expand (SAFE & WORKING) ===
+    $desc = $s['description'] ?? '';
+    $shortDesc = strlen($desc) > 120 ? substr($desc, 0, 120) . '...' : $desc;
 
-echo '<p class="mb-2"><strong>Title:</strong> ';
-echo '<span class="text-muted desc-short" ';
-echo 'data-full="' . h($desc) . '" ';  // Full text stored safely
-echo 'data-short="' . h($shortDesc) . '" ';  // Short version
-echo 'style="max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;">';
-echo h($shortDesc);
-echo '</span>';
+    echo '<p class="mb-2"><strong>Title:</strong> ';
+    echo '<span class="text-muted desc-short" ';
+    echo 'data-full="' . h($desc) . '" ';  // Full text stored safely
+    echo 'data-short="' . h($shortDesc) . '" ';  // Short version
+    echo 'style="max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;">';
+    echo h($shortDesc);
+    echo '</span>';
 
-if (strlen($desc) > 120) {
-    echo ' <a href="#" class="small text-primary expand-desc" data-target="desc-' . $s['id'] . '">[show more]</a>';
-}
-echo '</p>';
+    if (strlen($desc) > 120) {
+      echo ' <a href="#" class="small text-primary expand-desc" data-target="desc-' . $s['id'] . '">[show more]</a>';
+    }
+    echo '</p>';
 
-// Continue heredoc
+    // Continue heredoc
     echo <<<CARD
                     <p><strong>Fleet:</strong> {$s['fleet']} | <strong>Device:</strong> {$dev}</p>
                     <p><strong>Requester:</strong> {$s['requester']}</p>

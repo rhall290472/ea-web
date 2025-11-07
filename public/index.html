@@ -121,8 +121,28 @@
               <p class="text-muted small">
                 <em>Developed with PHP, mPDF, Bootstrap, and modern web technologies. Extensible and deployable on
                   standard web servers.</em><br>
-                <strong>Version:</strong> 1.0 | <strong>Last Updated:</strong> November 2025
+              <p class="text-muted small" id="versionInfo">
+                <em>Loading version...</em>
               </p>
+
+              <script>
+                fetch('version.json')
+                  .then(r => r.ok ? r.json() : { tag: 'dev', commit: '??', date: 'unknown' })
+                  .then(v => {
+                    const el = document.getElementById('versionInfo');
+                    el.innerHTML = `
+        <strong>Version:</strong> 
+        <a href="https://github.com/yourname/your-repo/commit/${v.commit}" target="_blank" class="text-decoration-none">
+          ${v.tag}
+        </a>
+        <code class="text-muted">(${v.commit})</code>
+        | <strong>Last Updated:</strong> ${v.date}
+      `;
+                  })
+                  .catch(() => {
+                    document.getElementById('versionInfo').innerHTML = '<em>Version info unavailable</em>';
+                  });
+              </script>
             </div>
           </div>
         </div>
@@ -149,7 +169,7 @@
           <input type="text" class="form-control" name="ea_number" id="ea_number">
         </div>
         <div class="col-md-4">
-          <label>Revision</label>
+          <label>EA Revision</label>
           <input type="text" class="form-control" name="revision" id="revision">
         </div>
         <div class="col-12">
@@ -184,7 +204,7 @@
             <option value="Planning">Planning</option>
             <option value="In Work">In Work</option>
             <option value="Completed">Completed</option>
-            <option value="Completed">On Hold</option>
+            <option value="On Hold">On Hold</option>
           </select>
         </div>
         <div class="col-12">
@@ -484,7 +504,9 @@
       window.showCreateForm = function () {
         hideAll();
         $('#createForm').removeClass('hidden');
+
         if (!$('#sea_id').val()) {
+          // === NEW SEA: Setup form ===
           $('#sea_action').val('create');
           $('#formTitle').text('New SEA');
           $('#submitBtn').text('Create SEA');
@@ -494,9 +516,32 @@
           $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
           addPartRow();
           addInstrRow();
+
+          // === PREVIEW ID: Generate initial preview ===
+          generateIdPreview();
+
+          // === LIVE UPDATE: When fleet changes, update ID preview ===
+          $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
+        } else {
+          // === EDIT MODE: Don't mess with existing ID ===
+          $('#fleet').off('change.idPreview'); // Remove listener if editing
         }
       };
 
+      // === HELPER: Generate and display SEA ID preview ===
+      function generateIdPreview() {
+        const fleetSelect = $('#fleet');
+        let fleet = fleetSelect.val() || 'UNKNOWN';
+        fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (fleet === '') fleet = 'UNKNOWN';
+
+        const today = new Date();
+        const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
+        const randomPart = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0'); // 100–999
+
+        const previewId = `SEA-${fleet}-${datePart}-${randomPart}`;
+        $('#display_id').val(previewId);
+      }
       window.showSeaList = function () {
         hideAll();
         $('#listView').removeClass('hidden');

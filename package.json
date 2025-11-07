@@ -1,0 +1,10 @@
+{
+  "name": "sea-tool",
+  "version": "1.0.0",
+  "scripts": {
+    "version": "node generate-version.js",
+    "build": "npm run version",
+    "deploy": "npm run build && echo 'Deploying...'"
+  },
+  "devDependencies": {}
+}
