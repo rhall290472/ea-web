@@ -76,8 +76,8 @@ $instHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;fon
 foreach ($inst as $i => $row) {
   $instHtml .= "<tr>
         <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['instruction'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($row['notes'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . allow_html($row['instruction'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['notes'] ?? '') . "</td>
     </tr>";
 }
 $instHtml .= '</tbody></table>';
@@ -110,6 +110,21 @@ if (!empty($sea['device'])) {
 } else {
   $deviceDisplay = '—';
 }
+
+// Helper: safely allow basic HTML in rich text fields + convert newlines
+function allow_html($s)
+{
+  $s = $s ?? '—';
+  // Convert newlines to <br> first (before any existing HTML)
+  $s = nl2br($s);
+  // If you want to sanitize (recommended for untrusted input):
+  // Require HTMLPurifier via Composer, then:
+  // $purifier = new HTMLPurifier();
+  // return $purifier->purify($s);
+  // Allowed tags: p, br, b, i, u, strong, em, ul, ol, li, etc.
+  return $s;  // Raw with <br> added; tags from input will render
+}
+
 
 // ------------------------------------------------------------------
 // 7. FINAL HTML
@@ -170,6 +185,7 @@ $html = <<<HTML
 </html>
 HTML;
 
+
 // Replace placeholders
 $replacements = [
   '{{DATE}}'           => date('Y-m-d H:i:s'),
@@ -181,7 +197,7 @@ $replacements = [
   '{{REQUESTER}}'      => h($sea['requester'] ?? '—'),
   '{{STATUS}}'         => h($sea['status'] ?? 'Planning'),  // NEW
   '{{DESCRIPTION}}'    => nl2br_h($sea['description'] ?? '—'),
-  '{{JUSTIFICATION}}'  => nl2br_h($sea['justification'] ?? '—'),
+  '{{JUSTIFICATION}}'  => allow_html($sea['justification'] ?? '—'),
   '{{IMPACT}}'          => nl2br_h($sea['impact'] ?? '—'),
   '{{PRIORITY}}'       => h($sea['priority'] ?? '—'),
   '{{TARGET_DATE}}'    => h($sea['target_date'] ?? '—'),
@@ -197,12 +213,28 @@ $html = str_replace(array_keys($replacements), array_values($replacements), $htm
 // ------------------------------------------------------------------
 ob_clean();
 $mpdf = new Mpdf([
-  'format' => 'A4',
+  'format' => 'Letter',
   'margin_left' => 15,
   'margin_right' => 15,
-  'margin_top' => 20,
-  'margin_bottom' => 20,
+  'margin_top' => 30,  // Increased to make space for header
+  'margin_bottom' => 30,  // Increased to make space for footer
+  'margin_header' => 10,  // Space between header and body
+  'margin_footer' => 10,  // Space between footer and body
 ]);
+
+// Set Header (with image - replace 'path/to/logo.png' with your actual image path)
+$header = '
+<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
+    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">  <!-- Adjust width as needed -->
+</div>';
+$mpdf->SetHTMLHeader($header);
+
+// Set Footer (page x of x and SEA version)
+$footer = '
+<div style="text-align: right; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
+    Page {PAGENO} of {nbpg} | Version: ' . h($sea['version'] ?? '1') . '
+</div>';
+$mpdf->SetHTMLFooter($footer);
 
 $mpdf->WriteHTML($html);
 
