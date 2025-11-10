@@ -57,8 +57,8 @@ try {
   $uploadDir = UPLOAD_DIR . '/SEA/' . $sea_id;
   $webBase   = '/data/uploads/SEA/' . $sea_id;
 
-  if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+  if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
+    throw new Exception('Failed to create upload directory');
   }
 
   $keepAttachments = [];
@@ -79,12 +79,8 @@ try {
         continue;
       }
 
-      $safeName = preg_replace('/[^\w\.-]/', '_', $name);
-      $targetPath = $uploadDir . '/' . $safeName;
-      $webUrl = $webBase . '/' . $safeName;
-
-      $originalName = $name;
-      $safeName = preg_replace('/[^\w\.\-]/', '_', $originalName);  // Sanitize but keep original
+      // Sanitize once
+      $safeName = preg_replace('/[^\w\.\-]/', '_', $name);
       $targetPath = $uploadDir . '/' . $safeName;
       $webUrl = $webBase . '/' . $safeName;
 
@@ -103,14 +99,16 @@ try {
           continue;
         }
       }
+
+      // Move with error handling
       if (move_uploaded_file($_FILES['attachments']['tmp_name'][$k], $targetPath)) {
         $newAttachments[] = $webUrl;
       } else {
-        error_log("Failed to move uploaded file: " . $_FILES['attachments']['tmp_name'][$k]);
+        throw new Exception('Failed to upload file: ' . $name);
       }
     }
   }
-
+  
   if (!empty($conflicts)) {
     ob_end_clean();
     $response = [
