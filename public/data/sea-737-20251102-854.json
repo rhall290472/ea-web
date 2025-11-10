@@ -1,5 +1,5 @@
 {
-    "id": "SEA-20251102-854",
+    "id": "SEA-737-20251102-854",
     "requester": "Richard Hall",
     "description": "The Thales Ka Band connectivity system provides the aircraft with satellite internet connectivity and a wireless local area network (LAN). This Engineering Authorization (EA) provides Maintenance with instructions to remove the Thales Ka system from the aircraft listed in this EA's effectivity. ",
     "justification": "Remove Thales Ka (Gen 1) switches from the P5 overhead panel.",
@@ -24,5 +24,5 @@
         "FTD-3",
         "FTD-4"
     ],
-    "attachments": []
+    "attachments": ["/data/uploads/SEA/SEA-20251104-512/Page_5_from_187354.pdf"]
 }
