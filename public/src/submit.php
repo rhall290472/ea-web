@@ -29,7 +29,7 @@ try {
     $datePart = date('Ymd');
     $randomPart = substr(str_shuffle('0123456789'), 0, 3);
 
-    $sea_id = "SEA-{$fleet}-{$datePart}-{$randomPart}";
+    $sea_id = "sea-{$fleet}-{$datePart}-{$randomPart}";
   }
 
   $jsonFile = DATA_DIR . '/' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea_id) . '.json';

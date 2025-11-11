@@ -15,7 +15,7 @@
       "request": "launch",
       "type": "chrome",
       "url": "https://localhost/ea-web/public/index.html",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}/public"
     }
   ]
 }
