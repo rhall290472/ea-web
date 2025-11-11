@@ -1,5 +1,5 @@
 {
-    "id": "SEA--737-20251102-970",
+    "id": "SEA-20251102-970",
     "requester": "Richard Hall",
     "description": "737 FMC OPC SOFTWARE UPDATE VNAV ALT ENABLE",
     "justification": "This EA installs a new version of the FMC OPC software on 737 NG Aircraft. This new OPC software enables the VNAV ALT feature as requested by flight ops. This change allows the aircraft to stay in VNAV mode when a conflict occurs between the VNAV profile and the MCP altitude, which decreases workload for pilots.",

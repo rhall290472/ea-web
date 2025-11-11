@@ -656,16 +656,29 @@
               $c.html(html);
 
               // Reset and populate fleet filter
+              // Inside loadSeaList(), after populating .sea-card
               $('#fleetFilter').html('<option value="">All Fleets</option>');
-              let fleets = new Set();
-              $('.sea-card').each(function () {
-                let fleetText = $(this).find('p:contains("Fleet:")').text() || '';
-                let fleet = fleetText.replace('Fleet:', '').replace(/\|.*/, '').trim(); // Extract just the fleet value
-                if (fleet) fleets.add(fleet);
-              });
-              let options = Array.from(fleets).sort().map(f => `<option value="${f}">${f}</option>`).join('');
-              $('#fleetFilter').append(options);
+              const fleets = new Set();
 
+              $('.sea-card').each(function () {
+                const $card = $(this);
+                const $fleetStrong = $card.find('strong').filter((_, el) => $(el).text().trim() === 'Fleet:');
+                if ($fleetStrong.length) {
+                  let fleetVal = '';
+                  const next = $fleetStrong[0].nextSibling;
+                  if (next && next.nodeType === Node.TEXT_NODE) {
+                    fleetVal = next.textContent.split('|')[0].trim();
+                  } else {
+                    const match = $fleetStrong.parent().text().match(/Fleet:\s*([^\|]+)/i);
+                    fleetVal = match ? match[1].trim() : '';
+                  }
+                  if (fleetVal) fleets.add(fleetVal);
+                }
+              });
+
+              Array.from(fleets).sort().forEach(f => {
+                $('#fleetFilter').append(`<option value="${f}">${f}</option>`);
+              });
               // Trigger initial filter (in case of URL params or defaults)
               filterList();
             })
@@ -674,20 +687,42 @@
 
         // Combined filtering function
         function filterList() {
-          const term = $('#searchInput').val().toLowerCase();
-          const selectedFleet = $('#fleetFilter').val().toLowerCase();
+          const term = $('#searchInput').val().toLowerCase().trim();
+          const selectedFleet = $('#fleetFilter').val(); // Keep original case for comparison
 
           $('.sea-card').each(function () {
-            const txt = this.textContent.toLowerCase();
-            let fleetText = $(this).find('p:contains("Fleet:")').text() || '';
-            const cardFleet = fleetText.replace('fleet:', '').replace(/\|.*/, '').trim().toLowerCase();
+            const $card = $(this);
+            const $col = $card.closest('.col-md-6');
 
-            const matchesText = !term || txt.includes(term);
+            // --- Search term match ---
+            const fullText = $card.text().toLowerCase();
+            const matchesSearch = !term || fullText.includes(term);
+
+            // --- Fleet match: Look for <strong>Fleet:</strong> followed by value ---
+            let cardFleet = '';
+            const $fleetStrong = $card.find('strong').filter(function () {
+              return $(this).text().trim() === 'Fleet:';
+            });
+            if ($fleetStrong.length) {
+              // Get the text *after* the <strong>Fleet:</strong>
+              const fleetNode = $fleetStrong[0].nextSibling;
+              if (fleetNode && fleetNode.nodeType === Node.TEXT_NODE) {
+                cardFleet = fleetNode.textContent.split('|')[0].trim();
+              } else {
+                // Fallback: get parent <p> and extract after "Fleet:"
+                const pText = $fleetStrong.parent().text();
+                const match = pText.match(/Fleet:\s*([^\|]+)/i);
+                cardFleet = match ? match[1].trim() : '';
+              }
+            }
+
             const matchesFleet = !selectedFleet || cardFleet === selectedFleet;
 
-            $(this).closest('.col-md-6')[matchesText && matchesFleet ? 'show' : 'hide']();
+            // Show/hide based on both filters
+            $col.toggle(matchesSearch && matchesFleet);
           });
         }
+
 
         // Event listeners for filtering
         $('#searchInput').on('input', filterList);
@@ -780,13 +815,13 @@
         // -------------------------------------------------
         // SEARCH
         // -------------------------------------------------
-        $('#searchInput').on('input', function () {
-          const term = this.value.toLowerCase();
-          $('.sea-card').each(function () {
-            const txt = this.textContent.toLowerCase();
-            $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
-          });
-        });
+        // $('#searchInput').on('input', function () {
+        //   const term = this.value.toLowerCase();
+        //   $('.sea-card').each(function () {
+        //     const txt = this.textContent.toLowerCase();
+        //     $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
+        //   });
+        // });
 
         // -------------------------------------------------
         // STARTUP
