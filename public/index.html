@@ -19,6 +19,19 @@
       min-height: 60px;
       /* same as original */
     }
+
+    /* Bootstrap already ships .visually-hidden, but just in case */
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
   </style>
   <script src="https://cdn.tiny.cloud/1/h9xs5cld1bkmamb6zycl5ymhfanahso689gglclrgt5gldlx/tinymce/7/tinymce.min.js"
     referrerpolicy="origin"></script>
@@ -152,134 +165,155 @@
 
     <!-- ====================== CREATE / EDIT FORM ====================== -->
     <div id="createForm" class="hidden">
-      <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
-      <h3 id="formTitle">New SEA</h3>
+      <!-- <h2 id="formTitle" class="mb-4">New SEA</h2> -->
 
-      <form id="seaForm" class="row g-3" enctype="multipart/form-data">
-        <input type="hidden" name="sea_id" id="sea_id">
-        <input type="hidden" name="action" id="sea_action" value="create">
-        <input type="hidden" name="parts_json" id="parts_json">
-        <input type="hidden" name="instructions_json" id="instructions_json">
+      <h2 id="formTitle" class="mb-3 d-flex justify-content-between align-items-center">
+        <span>New SEA</span>
+        <div>
+          <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="showSeaList()">Cancel</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="goBack()">Back</button>
+        </div>
+      </h2>
 
-        <div class="col-md-4">
-          <label>SEA ID</label>
-          <input type="text" class="form-control" id="display_id" disabled>
-        </div>
-        <div class="col-md-4">
-          <label>EA#</label>
-          <input type="text" class="form-control" name="ea_number" id="ea_number">
-        </div>
-        <div class="col-md-4">
-          <label>EA Revision</label>
-          <input type="text" class="form-control" name="revision" id="revision">
-        </div>
-        <div class="col-12">
-          <label>Title</label>
-          <textarea class="form-control" name="description" id="description" rows="3"></textarea>
-        </div>
-        <div class="col-md-6">
-          <label>Fleet</label>
-          <select class="form-select" name="fleet" id="fleet">
-            <option value="">Select Fleet</option>
-            <option value="737">737</option>
-            <option value="737-MAX">737 MAX</option>
-            <option value="757">757</option>
-            <option value="767">767</option>
-            <option value="777">777</option>
-            <option value="787">787</option>
-            <option value="A320">A320</option>
-          </select>
-        </div>
-        <div class="col-md-4" id="deviceCol" style="display:none">
-          <label>Device(s)</label>
-          <select class="form-select" id="device" name="device[]" multiple></select>
-        </div>
+      <form id="seaForm" enctype="multipart/form-data">
+        <input type="hidden" id="sea_action" name="action" value="create">
+        <input type="hidden" id="sea_id" name="sea_id" value="">
 
-        <div class="col-md-6">
-          <label>Requester <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" name="requester" id="requester" required>
-        </div>
-        <div class="col-md-4"> <!-- NEW: Status Dropdown -->
-          <label>Status</label>
-          <select class="form-control" name="status" id="status">
-            <option value="Planning">Planning</option>
-            <option value="In Work">In Work</option>
-            <option value="Completed">Completed</option>
-            <option value="On Hold">On Hold</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <label>Background</label>
-          <textarea class="form-control" name="justification" id="justification" rows="3"></textarea>
-        </div>
-        <div class="col-12">
-          <label>Impact</label>
-          <textarea class="form-control" name="impact" id="impact" rows="2"></textarea>
-        </div>
-        <div class="col-md-4">
-          <label>Priority</label>
-          <select class="form-select" name="priority" id="priority">
-            <option value="Low">Low</option>
-            <option value="Medium" selected>Medium</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label>Target Date</label>
-          <input type="date" class="form-control" name="target_date" id="target_date">
-        </div>
+        <div class="row g-3 mb-3">
+          <!-- SEA ID (display only) -->
+          <div class="col-md-4">
+            <label for="display_id" class="form-label">SEA ID</label>
+            <input type="text" class="form-control bg-light" id="display_id" readonly placeholder="Auto-generated">
+          </div>
+          <!-- EA# & Revision -->
+          <div class="col-md-4">
+            <label for="ea_number" class="form-label">EA#</label>
+            <input type="text" class="form-control" id="ea_number" name="ea_number" placeholder="e.g. EA-12345">
+          </div>
+          <div class="col-md-4">
+            <label for="revision" class="form-label">Revision</label>
+            <input type="text" class="form-control" id="revision" name="revision" placeholder="e.g. A">
+          </div>
 
-        <!-- PARTS TABLE -->
-        <div class="col-12">
-          <h5>Affected Parts</h5>
-          <table class="table table-sm parts-table" id="partsTable">
-            <thead>
-              <tr>
-                <th>Part #</th>
-                <th>Description</th>
-                <th>Type</th>
-                <th>Qty</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPartRow()">+ Add Part</button>
-        </div>
 
-        <!-- INSTRUCTIONS TABLE -->
-        <div class="col-12">
-          <h5>Work Instructions</h5>
-          <table class="table table-sm instr-table" id="instrTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Instruction</th>
-                <th>Notes</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          <button type="button" class="btn btn-sm btn-outline-primary" onclick="addInstrRow()">+ Add
-            Instruction</button>
+          <!-- Requester -->
+          <div class="col-md-12">
+            <label for="requester" class="form-label">Requester</label>
+            <input type="text" class="form-control" id="requester" name="requester" required>
+          </div>
+
+          <!-- Description -->
+          <div class="col-md-12">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+          </div>
+
+          <!-- Justification -->
+          <div class="col-md-12">
+            <label for="justification" class="form-label">Justification</label>
+            <textarea class="form-control" id="justification" name="justification" rows="2"></textarea>
+          </div>
+
+          <!-- Impact -->
+          <div class="col-md-12">
+            <label for="impact" class="form-label">Impact Assessment</label>
+            <textarea class="form-control" id="impact" name="impact" rows="5"></textarea>
+          </div>
+
+          <!-- Priority -->
+          <div class="col-md-4">
+            <label for="priority" class="form-label">Priority</label>
+            <select class="form-select" id="priority" name="priority">
+              <option value="Low">Low</option>
+              <option value="Medium" selected>Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+
+          <!-- Target Date -->
+          <div class="col-md-4">
+            <label for="target_date" class="form-label">Target Date</label>
+            <input type="date" class="form-control" id="target_date" name="target_date">
+          </div>
+
+          <!-- Status -->
+          <div class="col-md-4">
+            <label for="status" class="form-label">Status</label>
+            <select class="form-select" id="status" name="status">
+              <option value="Planning" selected>Planning</option>
+              <option value="In Work">In Work</option>
+              <option value="Completed">Completed</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+
+          <!-- Fleet -->
+          <div class="col-md-6">
+            <label for="fleet" class="form-label">Fleet</label>
+            <select class="form-select select2" id="fleet" name="fleet" required>
+              <option value="">-- Select Fleet --</option>
+              <option value="737">737</option>
+              <option value="777">777</option>
+              <option value="787">787</option>
+              <option value="A320">A320</option>
+              <!-- add more fleets here -->
+            </select>
+          </div>
+
+          <!-- Device (multi-select) -->
+          <div class="col-md-6">
+            <label for="device" class="form-label">Device(s)</label>
+            <select class="form-select select2" id="device" name="device[]" multiple></select>
+          </div>
+
+          <!-- Attachments -->
+          <div class="col-md-12">
+            <label for="attachments" class="form-label">Attachments</label>
+            <input type="file" class="form-control" id="attachments" name="attachments[]" multiple>
+            <div id="existingAttachments" class="mt-2"></div>
+          </div>
         </div>
 
-        <!-- ATTACHMENTS -->
-        <div class="col-12">
-          <h5>Attachments</h5>
-          <input type="file" class="form-control" name="attachments[]" multiple
-            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-          <div id="existingAttachments" class="mt-2"></div>
-        </div>
+        <!-- ==================== PARTS TABLE ==================== -->
+        <h4 class="mt-4">Affected Parts</h4>
+        <table class="table table-sm parts-table" id="partsTable">
+          <thead>
+            <tr>
+              <th>Part #</th>
+              <th>Description</th>
+              <th>Type</th>
+              <th>Qty</th>
+              <th style="width:50px;"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addPartRow()">+ Add Part</button>
 
-        <div class="col-12 text-end">
-          <button type="submit" id="submitBtn" class="btn btn-success">Create SEA</button>
+        <!-- ==================== INSTRUCTIONS TABLE ==================== -->
+        <h4 class="mt-4">Work Instructions</h4>
+        <table class="table table-sm instr-table" id="instrTable">
+          <thead>
+            <tr>
+              <th style="width:5%;">#</th>
+              <th style="width:70%;">Instruction</th>
+              <th style="width:20%;">Notes</th>
+              <th style="width:5%;"></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addInstrRow()">+ Add
+          Instruction</button>
+
+        <!-- ==================== SUBMIT ==================== -->
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+          <button type="button" class="btn btn-secondary me-md-2" onclick="goBack()">Back</button>
+          <button type="submit" id="submitBtn" class="btn btn-primary">Create SEA</button>
         </div>
       </form>
     </div>
-
     <!-- ====================== LIST VIEW ====================== -->
     <div id="listView" class="hidden">
       <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
@@ -739,39 +773,55 @@
         };
 
         window.editSea = function (id) {
-          showCreateForm();
+          hideAll();
+
+          // ---- Form mode -------------------------------------------------
           $('#sea_action').val('update');
-          $('#sea_id').val(id);
-          $('#display_id').val(id);
           $('#formTitle').text('Edit SEA – ' + id);
           $('#submitBtn').text('Update SEA');
 
+          // ---- Reset everything (while still hidden) --------------------
+          $('#seaForm')[0].reset();
+          $('#partsTable tbody').empty();
+          $('#instrTable tbody').empty();
+          stepCounter = 1;
+          $('#existingAttachments').empty();
+          $('#fleet').val('').trigger('change');
+          $('#device').val(null).trigger('change');
+
+          // ---- SEA ID must survive the reset ----------------------------
+          $('#sea_id').val(id);
+          $('#display_id').val(id);
+
+          // ---- Load JSON -------------------------------------------------
           fetch(`data/sea-${id}.json`)
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => {
+              console.log('Loaded SEA data →', d);
+
+              // ----- Basic fields -----
               $('#ea_number').val(d.ea_number || '');
               $('#revision').val(d.revision || '');
               $('#requester').val(d.requester || '');
               $('#description').val(d.description || '');
               $('#justification').val(d.justification || '');
-              // resize the justification textarea to fit loaded content
-              setTimeout(() => { try { autoResizeTextarea(document.getElementById('justification')); } catch (e) { } }, 50);
-              $('#impact').val(d.impact || '');
+
+              // ----- Impact (the field that was previously overwritten) -----
+              const impactVal = d.impact || '';
+              console.log('Setting #impact →', impactVal);
+              $('#impact').val(impactVal);
+
               $('#priority').val(d.priority || 'Medium');
               $('#target_date').val(d.target_date || '');
-              $('#status').val(d.status || 'Planning');  // NEW: Set status
+              $('#status').val(d.status || 'Planning');
 
-              $('#partsTable tbody').empty();
-              $('#instrTable tbody').empty();
-              stepCounter = 1;
+              // ----- Parts / Instructions -----
               (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
               (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
 
-              // ---- RESIZE ALL INSTRUCTION TEXTAREAS AFTER LOAD ----
-              // inside editSea() after the forEach that adds rows:
+              // ----- TinyMCE re-init -----
               setTimeout(() => {
-                // (re)-initialise TinyMCE on every instruction textarea
-                tinymce.remove('#instrTable .instr-text');   // clean any stray editors
+                tinymce.remove('#instrTable .instr-text');
                 tinymce.init({
                   selector: '#instrTable .instr-text',
                   height: 80,
@@ -789,29 +839,26 @@
                     });
                   }
                 });
-
-                // resize every textarea to fit its (now rich) content
-                $('#instrTable .instr-text').each(function () {
-                  autoResizeTextarea(this);
-                });
+                $('#instrTable .instr-text').each(function () { autoResizeTextarea(this); });
               }, 150);
 
+              // ----- Attachments -----
               loadExistingAttachments(d.attachments || []);
 
-              const savedFleet = d.fleet || '';
-              const savedDevices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
+              // ----- Fleet / Device -----
+              $('#fleet').val(d.fleet || '').trigger('change');
+              const devices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
+              $('#device').val(devices).trigger('change');
 
-              $('#fleet').val(savedFleet).trigger('change');
-              setTimeout(() => {
-                $('#device').val(savedDevices).trigger('change');
-              }, 100);
+              // ----- Finally show the form -----
+              $('#createForm').removeClass('hidden');
             })
             .catch(err => {
               console.error(err);
               showAlert('danger', 'Failed to load SEA: ' + err.message);
+              $('#choiceScreen').removeClass('hidden');
             });
         };
-
         // -------------------------------------------------
         // SEARCH
         // -------------------------------------------------
