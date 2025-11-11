@@ -283,133 +283,139 @@
     <!-- ====================== LIST VIEW ====================== -->
     <div id="listView" class="hidden">
       <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>All SEAs</h3>
-        <input type="text" class="form-control w-auto" id="searchInput" placeholder="Search...">
+      <h3>Existing SEAs</h3>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by keyword...">
+        </div>
+        <div class="col-md-6">
+          <select id="fleetFilter" class="form-select">
+            <option value="">All Fleets</option>
+            <!-- Options will be populated dynamically -->
+          </select>
+        </div>
       </div>
-      <div class="row" id="seaContainer">
-        <!-- Loaded via AJAX -->
-      </div>
+      <div id="seaContainer" class="row"></div> <!-- Content from list_seas.php loads here -->
     </div>
-  </div>
 
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-  <script>
-    // -------------------------------------------------
-    // Small HTML-escape helper used in templates
-    function h(s) {
-      if (s === null || s === undefined) return '';
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    // AUTO-RESIZE TEXTAREA (Instruction field)
-    // -------------------------------------------------
-    // TinyMCE – initialise only on the instruction textarea
-    // -------------------------------------------------
-    tinymce.init({
-      selector: '#instrTable .instr-text',          // target every instruction textarea
-      height: 80,
-      menubar: false,
-      plugins: 'lists link image table code autoresize',
-      toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
-  branding: false,
-  statusbar: true,
-      // allow manual resize and enable autoresize plugin to auto-grow the editor
-      resize: true,
-      autoresize_bottom_margin: 12,
-      setup: function (editor) {
-        // keep the hidden textarea in sync (TinyMCE does this automatically)
-        editor.on('change keyup', function () {
-          editor.save();                       // write HTML back to <textarea>
-          // keep legacy textarea sizing logic (harmless) in case TinyMCE is removed
-          try { autoResizeTextarea(editor.getElement()); } catch (e) { /* noop */ }
-        });
+    <script>
+      // -------------------------------------------------
+      // Small HTML-escape helper used in templates
+      function h(s) {
+        if (s === null || s === undefined) return '';
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
       }
-    });
 
-    // -------------------------------------------------
-    // Existing auto-resize (unchanged, works with TinyMCE HTML)
-    // -------------------------------------------------
-    function autoResizeTextarea(el) {
-      el.style.height = 'auto';
-      el.style.height = (el.scrollHeight) + 'px';
-    }
-    function autoResizeTextarea(el) {
-      el.style.height = 'auto';                     // allow shrinking
-      el.style.height = el.scrollHeight + 'px';     // fit content
-    }
-
-    $(document).ready(function () {
-      let stepCounter = 1;
-
-      // === FLEET → DEVICE MAP (YOUR ORIGINAL) ===
-      const fleetDeviceMap = {
-        '737': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FTD-2', 'FTD-3', 'FTD-4', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10'],
-        '737-MAX': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11',
-          'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6', 'FTD-7', 'FTD-8', 'FTD-9', 'FTD-10', 'FTD-11'],
-        '757': ['FFS-1', 'FFS-2', 'FFS-3', 'FTD-1', 'FTD-2'],
-        '767': ['FFS-3', 'FFS-4', 'FFS-5'],
-        '777': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-5', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FTD-3'],
-        '787': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6'],
-        'A320': ['FFS-1', 'FFS-4', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11', 'FFS-12',
-          'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6']
-      };
-
+      // AUTO-RESIZE TEXTAREA (Instruction field)
       // -------------------------------------------------
-      // SELECT2 INITIALISATION
+      // TinyMCE – initialise only on the instruction textarea
       // -------------------------------------------------
-      $('#fleet').select2({ placeholder: "Select Fleet", allowClear: true });
-      $('#device').select2({ placeholder: "Select Device(s)", allowClear: true });
-
-      // -------------------------------------------------
-      // AUTOSIZE: justification textarea
-      // -------------------------------------------------
-      // auto-resize as the user types
-      $('#justification').on('input', function () {
-        autoResizeTextarea(this);
-      });
-
-      // -------------------------------------------------
-      // FLEET → DEVICE POPULATION
-      // -------------------------------------------------
-      $('#fleet').on('change', function () {
-        const fleet = $(this).val();
-        const $device = $('#device');
-        $device.empty().trigger('change');
-        $('#deviceCol').toggle(!!fleet);
-        if (fleet && fleetDeviceMap[fleet]) {
-          fleetDeviceMap[fleet].forEach(d => $device.append(`<option value="${d}">${d}</option>`));
+      tinymce.init({
+        selector: '#instrTable .instr-text',          // target every instruction textarea
+        height: 80,
+        menubar: false,
+        plugins: 'lists link image table code autoresize',
+        toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
+        branding: false,
+        statusbar: true,
+        // allow manual resize and enable autoresize plugin to auto-grow the editor
+        resize: true,
+        autoresize_bottom_margin: 12,
+        setup: function (editor) {
+          // keep the hidden textarea in sync (TinyMCE does this automatically)
+          editor.on('change keyup', function () {
+            editor.save();                       // write HTML back to <textarea>
+            // keep legacy textarea sizing logic (harmless) in case TinyMCE is removed
+            try { autoResizeTextarea(editor.getElement()); } catch (e) { /* noop */ }
+          });
         }
       });
 
       // -------------------------------------------------
-      // PARTS ROW
+      // Existing auto-resize (unchanged, works with TinyMCE HTML)
       // -------------------------------------------------
-      window.addPartRow = function (data = {}) {
-        const row = `<tr>
+      function autoResizeTextarea(el) {
+        el.style.height = 'auto';
+        el.style.height = (el.scrollHeight) + 'px';
+      }
+      function autoResizeTextarea(el) {
+        el.style.height = 'auto';                     // allow shrinking
+        el.style.height = el.scrollHeight + 'px';     // fit content
+      }
+
+      $(document).ready(function () {
+        let stepCounter = 1;
+
+        // === FLEET → DEVICE MAP (YOUR ORIGINAL) ===
+        const fleetDeviceMap = {
+          '737': ['FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FTD-2', 'FTD-3', 'FTD-4', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10'],
+          '737-MAX': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11',
+            'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6', 'FTD-7', 'FTD-8', 'FTD-9', 'FTD-10', 'FTD-11'],
+          '757': ['FFS-1', 'FFS-2', 'FFS-3', 'FTD-1', 'FTD-2'],
+          '767': ['FFS-3', 'FFS-4', 'FFS-5'],
+          '777': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-5', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FTD-3'],
+          '787': ['FFS-1', 'FFS-2', 'FFS-3', 'FFS-4', 'FFS-5', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FTD-1', 'FTD-2', 'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6'],
+          'A320': ['FFS-1', 'FFS-4', 'FTD-1', 'FTD-2', 'FFS-6', 'FFS-7', 'FFS-8', 'FFS-9', 'FFS-10', 'FFS-11', 'FFS-12',
+            'FTD-3', 'FTD-4', 'FTD-5', 'FTD-6']
+        };
+
+        // -------------------------------------------------
+        // SELECT2 INITIALISATION
+        // -------------------------------------------------
+        $('#fleet').select2({ placeholder: "Select Fleet", allowClear: true });
+        $('#device').select2({ placeholder: "Select Device(s)", allowClear: true });
+
+        // -------------------------------------------------
+        // AUTOSIZE: justification textarea
+        // -------------------------------------------------
+        // auto-resize as the user types
+        $('#justification').on('input', function () {
+          autoResizeTextarea(this);
+        });
+
+        // -------------------------------------------------
+        // FLEET → DEVICE POPULATION
+        // -------------------------------------------------
+        $('#fleet').on('change', function () {
+          const fleet = $(this).val();
+          const $device = $('#device');
+          $device.empty().trigger('change');
+          $('#deviceCol').toggle(!!fleet);
+          if (fleet && fleetDeviceMap[fleet]) {
+            fleetDeviceMap[fleet].forEach(d => $device.append(`<option value="${d}">${d}</option>`));
+          }
+        });
+
+        // -------------------------------------------------
+        // PARTS ROW
+        // -------------------------------------------------
+        window.addPartRow = function (data = {}) {
+          const row = `<tr>
           <td><input type="text" class="form-control" value="${data.part || ''}"></td>
           <td><input type="text" class="form-control" value="${data.desc || ''}"></td>
           <td><input type="text" class="form-control" value="${data.type || ''}"></td>
           <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
           <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
         </tr>`;
-        $('#partsTable tbody').append(row);
-      };
+          $('#partsTable tbody').append(row);
+        };
 
-      // -------------------------------------------------
-      // INSTRUCTION ROW (with auto-resize)
-      // -------------------------------------------------
-      window.addInstrRow = function (data = {}) {
-        const idx = $('#instrTable tbody tr').length;
-        const row = `
+        // -------------------------------------------------
+        // INSTRUCTION ROW (with auto-resize)
+        // -------------------------------------------------
+        window.addInstrRow = function (data = {}) {
+          const idx = $('#instrTable tbody tr').length;
+          const row = `
     <tr>
       <td class="text-center align-middle">${idx + 1}</td>
       <td>
@@ -426,29 +432,29 @@
         </button>
       </td>
     </tr>`;
-        $('#instrTable tbody').append(row);
+          $('#instrTable tbody').append(row);
 
-        // Initialise TinyMCE on the *new* textarea
-        tinymce.init({
-          // Use valid CSS selector (:last is jQuery-only); use :last-child for native querySelectorAll
-          selector: `#instrTable tbody tr:last-child .instr-text`,
-          height: 80,
-          menubar: false,
-          plugins: 'lists link image table code autoresize',
-          toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
-          branding: false,
-          statusbar: true,
-          resize: true,
-          autoresize_bottom_margin: 12,
-          setup: ed => {
-            ed.on('change keyup', () => {
-              ed.save();
-              try { autoResizeTextarea(ed.getElement()); } catch (e) { }
-            });
-          }
-        });
-        // end of addInstrRow - close the function so subsequent handlers are at document-ready scope
-      }
+          // Initialise TinyMCE on the *new* textarea
+          tinymce.init({
+            // Use valid CSS selector (:last is jQuery-only); use :last-child for native querySelectorAll
+            selector: `#instrTable tbody tr:last-child .instr-text`,
+            height: 80,
+            menubar: false,
+            plugins: 'lists link image table code autoresize',
+            toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code',
+            branding: false,
+            statusbar: true,
+            resize: true,
+            autoresize_bottom_margin: 12,
+            setup: ed => {
+              ed.on('change keyup', () => {
+                ed.save();
+                try { autoResizeTextarea(ed.getElement()); } catch (e) { }
+              });
+            }
+          });
+          // end of addInstrRow - close the function so subsequent handlers are at document-ready scope
+        }
 
         // -------------------------------------------------
         // REMOVE ROW (update step numbers)
@@ -558,7 +564,7 @@
           }
         });
 
-        
+
         function showAlert(type, message) {
           const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
           ${message}
@@ -575,55 +581,55 @@
           link.click();
         }
 
-      // -------------------------------------------------
-      // NAVIGATION
-      // -------------------------------------------------
-      window.showCreateForm = function () {
-        hideAll();
-        $('#createForm').removeClass('hidden');
+        // -------------------------------------------------
+        // NAVIGATION
+        // -------------------------------------------------
+        window.showCreateForm = function () {
+          hideAll();
+          $('#createForm').removeClass('hidden');
 
-        if (!$('#sea_id').val()) {
-          // === NEW SEA: Setup form ===
-          $('#sea_action').val('create');
-          $('#formTitle').text('New SEA');
-          $('#submitBtn').text('Create SEA');
-          stepCounter = 1;
-          $('#partsTable tbody').empty();
-          $('#instrTable tbody').empty();
-          $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
-          addPartRow();
-          addInstrRow();
+          if (!$('#sea_id').val()) {
+            // === NEW SEA: Setup form ===
+            $('#sea_action').val('create');
+            $('#formTitle').text('New SEA');
+            $('#submitBtn').text('Create SEA');
+            stepCounter = 1;
+            $('#partsTable tbody').empty();
+            $('#instrTable tbody').empty();
+            $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
+            addPartRow();
+            addInstrRow();
 
-          // === PREVIEW ID: Generate initial preview ===
-          generateIdPreview();
+            // === PREVIEW ID: Generate initial preview ===
+            generateIdPreview();
 
-          // === LIVE UPDATE: When fleet changes, update ID preview ===
-          $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
-        } else {
-          // === EDIT MODE: Don't mess with existing ID ===
-          $('#fleet').off('change.idPreview'); // Remove listener if editing
+            // === LIVE UPDATE: When fleet changes, update ID preview ===
+            $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
+          } else {
+            // === EDIT MODE: Don't mess with existing ID ===
+            $('#fleet').off('change.idPreview'); // Remove listener if editing
+          }
+        };
+
+        // === HELPER: Generate and display SEA ID preview ===
+        function generateIdPreview() {
+          const fleetSelect = $('#fleet');
+          let fleet = fleetSelect.val() || 'UNKNOWN';
+          fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
+          if (fleet === '') fleet = 'UNKNOWN';
+
+          const today = new Date();
+          const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
+          const randomPart = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0'); // 100–999
+
+          const previewId = `SEA-${fleet}-${datePart}-${randomPart}`;
+          $('#display_id').val(previewId);
         }
-      };
-
-      // === HELPER: Generate and display SEA ID preview ===
-      function generateIdPreview() {
-        const fleetSelect = $('#fleet');
-        let fleet = fleetSelect.val() || 'UNKNOWN';
-        fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
-        if (fleet === '') fleet = 'UNKNOWN';
-
-        const today = new Date();
-        const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
-        const randomPart = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0'); // 100–999
-
-        const previewId = `SEA-${fleet}-${datePart}-${randomPart}`;
-        $('#display_id').val(previewId);
-      }
-      window.showSeaList = function () {
-        hideAll();
-        $('#listView').removeClass('hidden');
-        loadSeaList();
-      };
+        window.showSeaList = function () {
+          hideAll();
+          $('#listView').removeClass('hidden');
+          loadSeaList();
+        };
 
         window.goBack = function () {
           hideAll();
@@ -638,14 +644,55 @@
         // -------------------------------------------------
         // LIST & EDIT
         // -------------------------------------------------
+        // -------------------------------------------------
+        // LIST & EDIT
+        // -------------------------------------------------
         function loadSeaList() {
           const $c = $('#seaContainer');
           $c.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
           fetch('./src/list_seas.php')
             .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-            .then(html => $c.html(html))
+            .then(html => {
+              $c.html(html);
+
+              // Reset and populate fleet filter
+              $('#fleetFilter').html('<option value="">All Fleets</option>');
+              let fleets = new Set();
+              $('.sea-card').each(function () {
+                let fleetText = $(this).find('p:contains("Fleet:")').text() || '';
+                let fleet = fleetText.replace('Fleet:', '').replace(/\|.*/, '').trim(); // Extract just the fleet value
+                if (fleet) fleets.add(fleet);
+              });
+              let options = Array.from(fleets).sort().map(f => `<option value="${f}">${f}</option>`).join('');
+              $('#fleetFilter').append(options);
+
+              // Trigger initial filter (in case of URL params or defaults)
+              filterList();
+            })
             .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
         }
+
+        // Combined filtering function
+        function filterList() {
+          const term = $('#searchInput').val().toLowerCase();
+          const selectedFleet = $('#fleetFilter').val().toLowerCase();
+
+          $('.sea-card').each(function () {
+            const txt = this.textContent.toLowerCase();
+            let fleetText = $(this).find('p:contains("Fleet:")').text() || '';
+            const cardFleet = fleetText.replace('fleet:', '').replace(/\|.*/, '').trim().toLowerCase();
+
+            const matchesText = !term || txt.includes(term);
+            const matchesFleet = !selectedFleet || cardFleet === selectedFleet;
+
+            $(this).closest('.col-md-6')[matchesText && matchesFleet ? 'show' : 'hide']();
+          });
+        }
+
+        // Event listeners for filtering
+        $('#searchInput').on('input', filterList);
+        $('#fleetFilter').on('change', filterList);
+
 
         window.deleteSea = function (id) {
           if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
@@ -776,66 +823,66 @@
         });
       });
 
-    // -------------------------------------------------
-    // COLLECT PARTS DATA
-    // -------------------------------------------------
-    function getParts() {
-      const parts = [];
-      $('#partsTable tbody tr').each(function () {
-        const row = $(this);
-        parts.push({
-          part: row.find('input:eq(0)').val().trim(),
-          desc: row.find('input:eq(1)').val().trim(),
-          type: row.find('input:eq(2)').val().trim(),
-          qty: row.find('input:eq(3)').val().trim()
+      // -------------------------------------------------
+      // COLLECT PARTS DATA
+      // -------------------------------------------------
+      function getParts() {
+        const parts = [];
+        $('#partsTable tbody tr').each(function () {
+          const row = $(this);
+          parts.push({
+            part: row.find('input:eq(0)').val().trim(),
+            desc: row.find('input:eq(1)').val().trim(),
+            type: row.find('input:eq(2)').val().trim(),
+            qty: row.find('input:eq(3)').val().trim()
+          });
         });
-      });
-      return parts;
-    }
+        return parts;
+      }
 
-    // -------------------------------------------------
-    // COLLECT INSTRUCTIONS DATA
-    // -------------------------------------------------
-    function getInstructions() {
-      const instructions = [];
-      $('#instrTable tbody tr').each(function () {
-        const row = $(this);
-        instructions.push({
-          instruction: row.find('.instr-text').val().trim(),
-          notes: row.find('.instr-notes').val().trim()
+      // -------------------------------------------------
+      // COLLECT INSTRUCTIONS DATA
+      // -------------------------------------------------
+      function getInstructions() {
+        const instructions = [];
+        $('#instrTable tbody tr').each(function () {
+          const row = $(this);
+          instructions.push({
+            instruction: row.find('.instr-text').val().trim(),
+            notes: row.find('.instr-notes').val().trim()
+          });
         });
-      });
-      return instructions;
-    }
+        return instructions;
+      }
 
-    window.removeInstrRow = function (btn) {
-      const editorId = tinymce.get($(btn).closest('tr').find('.instr-text').attr('id'));
-      if (editorId) tinymce.remove(editorId);
-      $(btn).closest('tr').remove();
-      renumberInstr();
-    };
-  </script>
+      window.removeInstrRow = function (btn) {
+        const editorId = tinymce.get($(btn).closest('tr').find('.instr-text').attr('id'));
+        if (editorId) tinymce.remove(editorId);
+        $(btn).closest('tr').remove();
+        renumberInstr();
+      };
+    </script>
 
-  <!-- Overwrite Confirmation Modal -->
-  <div class="modal fade" id="overwriteModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title text-warning">File Already Exists</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>The following file(s) already exist:</p>
-          <ul id="conflictList" class="list-unstyled"></ul>
-          <p>Do you want to <strong>overwrite</strong> them?</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-warning" id="confirmOverwrite">Overwrite</button>
+    <!-- Overwrite Confirmation Modal -->
+    <div class="modal fade" id="overwriteModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-warning">File Already Exists</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p>The following file(s) already exist:</p>
+            <ul id="conflictList" class="list-unstyled"></ul>
+            <p>Do you want to <strong>overwrite</strong> them?</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-warning" id="confirmOverwrite">Overwrite</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
 </body>
 
