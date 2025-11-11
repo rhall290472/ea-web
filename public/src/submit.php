@@ -21,22 +21,25 @@ try {
   $action = $_POST['action'] ?? 'create';
   $sea_id = $_POST['sea_id'] ?? '';
 
-  if ($action === 'create' && empty($sea_id)) {
-    $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
-    $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet); // Sanitize: only uppercase letters/numbers
-    if ($fleet === '') $fleet = 'UNKNOWN';
+  $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
+  $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet); // Sanitize: only uppercase letters/numbers
+  if ($fleet === '') $fleet = 'UNKNOWN';
 
+  if ($action === 'create' && empty($sea_id)) {
     $datePart = date('Ymd');
     $randomPart = substr(str_shuffle('0123456789'), 0, 3);
 
-    $sea_id = "sea-{$fleet}-{$datePart}-{$randomPart}";
+    $short_id = "{$fleet}-{$datePart}-{$randomPart}";
+    $sea_id = "sea-{$short_id}"; // Full ID for filename only
+  } else {
+    $short_id = $sea_id;
   }
 
-  $jsonFile = DATA_DIR . '/' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea_id) . '.json';
+  $jsonFile = DATA_DIR . '/sea-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $short_id) . '.json';
   $existing = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
 
   $sea = [
-    'id'             => $sea_id,
+    'id'             => $short_id, // Always store short ID without 'sea-'
     'requester'      => $_POST['requester'] ?? $existing['requester'] ?? '',
     'description'    => $_POST['description'] ?? $existing['description'] ?? '',
     'justification'  => $_POST['justification'] ?? $existing['justification'] ?? '',
@@ -50,12 +53,12 @@ try {
     'instructions_json' => $_POST['instructions_json'] ?? $existing['instructions_json'] ?? '[]',
     'ea_number'      => $_POST['ea_number'] ?? $existing['ea_number'] ?? '',
     'revision'       => $_POST['revision'] ?? $existing['revision'] ?? '',
-    'fleet'          => $_POST['fleet'] ?? $existing['fleet'] ?? '',
-    'device'         => is_array($_POST['device']) ? array_filter($_POST['device']) : []
+    'fleet'          => $fleet ?? $existing['fleet'] ?? '',
+    'device'         => is_array($_POST['device']) ? array_filter($_POST['device']) : ($existing['device'] ?? [])
   ];
 
-  $uploadDir = UPLOAD_DIR . '/SEA/' . $sea_id;
-  $webBase   = '/data/uploads/SEA/' . $sea_id;
+  $uploadDir = UPLOAD_DIR . '/SEA/' . $short_id;
+  $webBase   = '/data/uploads/SEA/' . $short_id;
 
   if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
     throw new Exception('Failed to create upload directory');
@@ -108,7 +111,7 @@ try {
       }
     }
   }
-  
+
   if (!empty($conflicts)) {
     ob_end_clean();
     $response = [
