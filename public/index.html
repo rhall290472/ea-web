@@ -628,6 +628,7 @@
         window.showCreateForm = function () {
           hideAll();
           resetForm();               // <-- NEW
+          addPartRow();  // Add initial blank row for new SEA
           $('#createForm').removeClass('hidden');
 
           if (!$('#sea_id').val()) {
@@ -785,14 +786,8 @@
           $('#formTitle').text('Edit SEA – ' + id);
           $('#submitBtn').text('Update SEA');
 
-          // ---- Reset everything (while still hidden) --------------------
-          $('#seaForm')[0].reset();
-          $('#partsTable tbody').empty();
-          $('#instrTable tbody').empty();
-          stepCounter = 1;
-          $('#existingAttachments').empty();
-          $('#fleet').val('').trigger('change');
-          $('#device').val(null).trigger('change');
+          // ---- Reset form completely (clears everything safely) ----------
+          resetForm();  // This replaces all your manual .empty() and .reset() calls
 
           // ---- SEA ID must survive the reset ----------------------------
           $('#sea_id').val(id);
@@ -802,7 +797,6 @@
           fetch(`data/sea-${id}.json`)
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => {
-              resetForm();                  // <-- NEW – clean before filling
               console.log('Loaded SEA data →', d);
 
               // ----- Basic fields -----
@@ -812,17 +806,21 @@
               $('#description').val(d.description || '');
               $('#justification').val(d.justification || '');
 
-              // ----- Impact (the field that was previously overwritten) -----
-              const impactVal = d.impact || '';
-              console.log('Setting #impact →', impactVal);
-              $('#impact').val(impactVal);
+              // ----- Impact -----
+              $('#impact').val(d.impact || '');
 
               $('#priority').val(d.priority || 'Medium');
               $('#target_date').val(d.target_date || '');
               $('#status').val(d.status || 'Planning');
 
-              // ----- Parts / Instructions -----
-              (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
+              // ----- Parts: Load existing, then add blank row only if empty -----
+              const parts = JSON.parse(d.parts_json || '[]') || [];
+              parts.forEach(addPartRow);
+              if (parts.length === 0) {
+                addPartRow();  // Add one blank row only if no parts exist
+              }
+
+              // ----- Instructions: Just load existing (no auto-blank) -----
               (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
 
               // ----- TinyMCE re-init -----
@@ -864,8 +862,7 @@
               showAlert('danger', 'Failed to load SEA: ' + err.message);
               $('#choiceScreen').removeClass('hidden');
             });
-        };
-        // -------------------------------------------------
+        };        // -------------------------------------------------
         // SEARCH
         // -------------------------------------------------
         // $('#searchInput').on('input', function () {
@@ -953,37 +950,37 @@
       // -------------------------------------------------
       // RESET THE WHOLE FORM (including TinyMCE, Select2, tables)
       // -------------------------------------------------
-  function resetForm() {
-    // 1. Reset the actual <form id="seaForm">
-    const formEl = document.getElementById('seaForm');
-    if (formEl && typeof formEl.reset === 'function') {
-      formEl.reset();
-    }
+      function resetForm() {
+        // 1. Reset the actual <form id="seaForm">
+        const formEl = document.getElementById('seaForm');
+        if (formEl && typeof formEl.reset === 'function') {
+          formEl.reset();
+        }
 
-    // 2. Clear Select2 fields (not reset by form.reset())
-    $('#fleet, #device, #priority, #status').val('').trigger('change');
+        // 2. Clear Select2 fields (not reset by form.reset())
+        $('#fleet, #device, #priority, #status').val('').trigger('change');
 
-    // 3. Clear TinyMCE + instruction rows
-    tinymce.remove('#instrTable .instr-text');
-    $('#instrTable tbody').empty();
+        // 3. Clear TinyMCE + instruction rows
+        tinymce.remove('#instrTable .instr-text');
+        $('#instrTable tbody').empty();
 
-    // 4. Clear parts table + add one blank row
-    $('#partsTable tbody').empty();
-    addPartRow();  // one empty row for user
+        // 4. Clear parts table + add one blank row
+        $('#partsTable tbody').empty();
+        //addPartRow();  // one empty row for user
 
-    // 5. Clear attachments UI
-    $('#existingAttachments')
-      .empty()
-      .html('<small class="text-muted">No attachments</small>');
-    $('#attachments').val('');  // file input
+        // 5. Clear attachments UI
+        $('#existingAttachments')
+          .empty()
+          .html('<small class="text-muted">No attachments</small>');
+        $('#attachments').val('');  // file input
 
-    // 6. Clear any fields that might be outside form or not reset
-    $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date')
-      .val('');
+        // 6. Clear any fields that might be outside form or not reset
+        $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date')
+          .val('');
 
-    // 7. Remove alerts
-    $('.alert').remove();
-  }
+        // 7. Remove alerts
+        $('.alert').remove();
+      }
     </script>
 
     <!-- Overwrite Confirmation Modal -->
