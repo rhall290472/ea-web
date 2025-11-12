@@ -440,6 +440,7 @@
             <td><input type="text" class="form-control form-control-sm desc-input" value="${h(data.desc || '')}"></td>
             <td>
               <select class="form-control form-control-sm type-select">
+                <option value="" ${data.type === '' ? 'selected' : ''}></option>
                 <option value="add" ${data.type === 'add' ? 'selected' : ''}>Add</option>
                 <option value="remove" ${data.type === 'remove' ? 'selected' : ''}>Remove</option>
                 <option value="modify" ${data.type === 'modify' ? 'selected' : ''}>Modify</option>

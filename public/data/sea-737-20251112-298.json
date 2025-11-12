@@ -1,0 +1,21 @@
+{
+    "id": "737-20251112-298",
+    "requester": "Richard Hall",
+    "description": "Test",
+    "justification": "",
+    "impact": "",
+    "priority": "Medium",
+    "target_date": "",
+    "timestamp": "2025-11-12 14:27:47",
+    "status": "Planning",
+    "version": 2,
+    "parts_json": "[{\"part\":\"\",\"desc\":\"\",\"type\":\"\",\"qty\":\"\"},{\"part\":\"\",\"desc\":\"\",\"type\":\"\",\"qty\":\"\"}]",
+    "instructions_json": "[{\"instruction\":\"\",\"notes\":\"\"}]",
+    "ea_number": "",
+    "revision": "",
+    "fleet": "737",
+    "device": [
+        "FFS-2"
+    ],
+    "attachments": []
+}
