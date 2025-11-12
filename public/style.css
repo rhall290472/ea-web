@@ -146,6 +146,16 @@ body {
   /* Hide scrollbars */
 }
 
+#instrTable .tox-tinymce {
+  border: 1px solid #ccc;
+}
+
+.tox-toolbar__group .tox-tbtn {
+  display: inline-block !important;
+  visibility: visible !important;
+}
+
+
 #conflictList code {
   background: #f8f9fa;
   padding: 2px 6px;

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdn.tiny.cloud/1/h9xs5cld1bkmamb6zycl5ymhfanahso689gglclrgt5gldlx/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+</head>
+
+<body>
+
+  <textarea id="editor">Test</textarea>
+
+  <script>
+    tinymce.init({
+      selector: '#editor',
+      height: 80,
+      menubar: false,
+      plugins: 'lists link image table code autoresize',
+      toolbar: 'undo redo | bold italic underline | bullist numlist | link | removeformat | code | table',
+      toolbar_mode: 'wrap',  // or 'floating', 'sliding'
+      branding: false,
+      statusbar: true,
+      // allow manual resize and enable autoresize plugin to auto-grow the editor
+      resize: true,
+      autoresize_bottom_margin: 12,
+    });
+  </script>
+
+</body>
+
+</html>
