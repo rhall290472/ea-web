@@ -191,14 +191,14 @@
             <input type="text" class="form-control" id="ea_number" name="ea_number" placeholder="e.g. EA-12345">
           </div>
           <div class="col-md-4">
-            <label for="revision" class="form-label">Revision</label>
+            <label for="revision" class="form-label">EA Revision</label>
             <input type="text" class="form-control" id="revision" name="revision" placeholder="e.g. A">
           </div>
 
 
           <!-- Requester -->
           <div class="col-md-12">
-            <label for="requester" class="form-label">Requester</label>
+            <label for="requester" class="form-label">Author</label>
             <input type="text" class="form-control" id="requester" name="requester" required>
           </div>
 
@@ -438,6 +438,14 @@
           <td><input type="text" class="form-control" value="${data.part || ''}"></td>
           <td><input type="text" class="form-control" value="${data.desc || ''}"></td>
           <td><input type="text" class="form-control" value="${data.type || ''}"></td>
+          <td>
+            <select class="form-control">
+            <option value="add" ${data.type === 'add' ? 'selected' : ''}>Add</option>
+            <option value="remove" ${data.type === 'remove' ? 'selected' : ''}>Remove</option>
+            <option value="modify" ${data.type === 'modify' ? 'selected' : ''}>Modify</option>
+            </select>
+         </td>
+         <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
           <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
           <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
         </tr>`;
