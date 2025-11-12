@@ -437,7 +437,6 @@
           const row = `<tr>
           <td><input type="text" class="form-control" value="${data.part || ''}"></td>
           <td><input type="text" class="form-control" value="${data.desc || ''}"></td>
-          <td><input type="text" class="form-control" value="${data.type || ''}"></td>
           <td>
             <select class="form-control">
             <option value="add" ${data.type === 'add' ? 'selected' : ''}>Add</option>
@@ -445,7 +444,6 @@
             <option value="modify" ${data.type === 'modify' ? 'selected' : ''}>Modify</option>
             </select>
          </td>
-         <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
           <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
           <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
         </tr>`;
