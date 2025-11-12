@@ -56,6 +56,9 @@ body {
 #instrTable th:nth-child(2),
 #instrTable td:nth-child(2) {
   width: 75%;
+  padding: 8px !important;
+  overflow: visible !important;
+  word-wrap: break-word;
 }
 
 #instrTable th:nth-child(3),
@@ -155,6 +158,26 @@ body {
   visibility: visible !important;
 }
 
+/* Allow images to scale properly inside TinyMCE editor */
+.tox-tinymce iframe body {
+  /* Optional: match your form font */
+  font-family: Segoe UI, Tahoma, sans-serif;
+  line-height: 1.5;
+}
+
+.tox-tinymce iframe body img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 8px 0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Optional: Prevent overflow in table cells */
+#instrTable td {
+  overflow: visible !important;
+}
 
 #conflictList code {
   background: #f8f9fa;
