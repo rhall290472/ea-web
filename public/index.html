@@ -166,7 +166,7 @@
     <!-- ====================== CREATE / EDIT FORM ====================== -->
     <div id="createForm" class="hidden">
       <!-- <h2 id="formTitle" class="mb-4">New SEA</h2> -->
-<button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
+      <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
       <h2 id="formTitle" class="mb-3 d-flex justify-content-between align-items-center">
         <span>New SEA</span>
         <div>
@@ -435,21 +435,20 @@
         // -------------------------------------------------
         window.addPartRow = function (data = {}) {
           const row = `<tr>
-          <td><input type="text" class="form-control" value="${data.part || ''}"></td>
-          <td><input type="text" class="form-control" value="${data.desc || ''}"></td>
-          <td>
-            <select class="form-control">
-            <option value="add" ${data.type === 'add' ? 'selected' : ''}>Add</option>
-            <option value="remove" ${data.type === 'remove' ? 'selected' : ''}>Remove</option>
-            <option value="modify" ${data.type === 'modify' ? 'selected' : ''}>Modify</option>
-            </select>
-         </td>
-          <td><input type="number" class="form-control" value="${data.qty || ''}" min="1"></td>
-          <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
-        </tr>`;
+            <td><input type="text" class="form-control form-control-sm part-input" value="${h(data.part || '')}"></td>
+            <td><input type="text" class="form-control form-control-sm desc-input" value="${h(data.desc || '')}"></td>
+            <td>
+              <select class="form-control form-control-sm type-select">
+                <option value="add" ${data.type === 'add' ? 'selected' : ''}>Add</option>
+                <option value="remove" ${data.type === 'remove' ? 'selected' : ''}>Remove</option>
+                <option value="modify" ${data.type === 'modify' ? 'selected' : ''}>Modify</option>
+              </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm qty-input" value="${h(data.qty || '')}" min="1"></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">×</button></td>
+          </tr>`;
           $('#partsTable tbody').append(row);
         };
-
         // -------------------------------------------------
         // INSTRUCTION ROW (with auto-resize)
         // -------------------------------------------------
@@ -626,6 +625,7 @@
         // -------------------------------------------------
         window.showCreateForm = function () {
           hideAll();
+          resetForm();               // <-- NEW
           $('#createForm').removeClass('hidden');
 
           if (!$('#sea_id').val()) {
@@ -681,9 +681,6 @@
           $('#choiceScreen, #createForm, #listView').addClass('hidden');
         }
 
-        // -------------------------------------------------
-        // LIST & EDIT
-        // -------------------------------------------------
         // -------------------------------------------------
         // LIST & EDIT
         // -------------------------------------------------
@@ -803,6 +800,7 @@
           fetch(`data/sea-${id}.json`)
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => {
+              resetForm();                  // <-- NEW – clean before filling
               console.log('Loaded SEA data →', d);
 
               // ----- Basic fields -----
@@ -919,15 +917,14 @@
         $('#partsTable tbody tr').each(function () {
           const row = $(this);
           parts.push({
-            part: row.find('input:eq(0)').val().trim(),
-            desc: row.find('input:eq(1)').val().trim(),
-            type: row.find('input:eq(2)').val().trim(),
-            qty: row.find('input:eq(3)').val().trim()
+            part: row.find('.part-input').val().trim(),
+            desc: row.find('.desc-input').val().trim(),
+            type: row.find('.type-select').val().trim(),
+            qty: row.find('.qty-input').val().trim()
           });
         });
         return parts;
       }
-
       // -------------------------------------------------
       // COLLECT INSTRUCTIONS DATA
       // -------------------------------------------------
@@ -949,6 +946,42 @@
         $(btn).closest('tr').remove();
         renumberInstr();
       };
+
+
+      // -------------------------------------------------
+      // RESET THE WHOLE FORM (including TinyMCE, Select2, tables)
+      // -------------------------------------------------
+  function resetForm() {
+    // 1. Reset the actual <form id="seaForm">
+    const formEl = document.getElementById('seaForm');
+    if (formEl && typeof formEl.reset === 'function') {
+      formEl.reset();
+    }
+
+    // 2. Clear Select2 fields (not reset by form.reset())
+    $('#fleet, #device, #priority, #status').val('').trigger('change');
+
+    // 3. Clear TinyMCE + instruction rows
+    tinymce.remove('#instrTable .instr-text');
+    $('#instrTable tbody').empty();
+
+    // 4. Clear parts table + add one blank row
+    $('#partsTable tbody').empty();
+    addPartRow();  // one empty row for user
+
+    // 5. Clear attachments UI
+    $('#existingAttachments')
+      .empty()
+      .html('<small class="text-muted">No attachments</small>');
+    $('#attachments').val('');  // file input
+
+    // 6. Clear any fields that might be outside form or not reset
+    $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date')
+      .val('');
+
+    // 7. Remove alerts
+    $('.alert').remove();
+  }
     </script>
 
     <!-- Overwrite Confirmation Modal -->
