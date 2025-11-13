@@ -34,7 +34,7 @@ function nl2br_h($s)
 }
 
 // ------------------------------------------------------------------
-// 3. PARTS TABLE
+// 3. BUILD PARTS TABLE
 // ------------------------------------------------------------------
 $parts = json_decode($sea['parts_json'] ?? '[]', true) ?? [];
 $partsHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">
@@ -49,10 +49,10 @@ $partsHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;fo
     <tbody>';
 foreach ($parts as $p) {
   $partsHtml .= "<tr>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['part'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['desc'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . h($p['type'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . h($p['qty'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\"> " . h($p['part'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\"> " . h($p['description'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\"> " . h($p['type'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\"> " . h($p['qty'] ?? '') . "</td>
     </tr>";
 }
 $partsHtml .= '</tbody></table>';
@@ -61,218 +61,135 @@ if (empty($parts)) {
 }
 
 // ------------------------------------------------------------------
-// 4. INSTRUCTIONS TABLE
+// 4. BUILD INSTRUCTIONS TABLE
 // ------------------------------------------------------------------
-$inst = json_decode($sea['instructions_json'] ?? '[]', true) ?? [];
-$instHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">
+$instr = json_decode($sea['instructions_json'] ?? '[]', true) ?? [];
+$instrHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;font-size:11px;">
     <thead>
         <tr style="background:#f8f9fa;">
-            <th style="border:1px solid #ddd;padding:8px;width:8%;">#</th>
-            <th style="border:1px solid #ddd;padding:8px;">Instruction</th>
-            <th style="border:1px solid #ddd;padding:8px;">Notes</th>
+            <th style="border:1px solid #ddd;padding:8px;width:5%;">#</th>
+            <th style="border:1px solid #ddd;padding:8px;width:70%;">Instruction</th>
+            <th style="border:1px solid #ddd;padding:8px;width:25%;">Notes</th>
         </tr>
     </thead>
     <tbody>';
-foreach ($inst as $i => $row) {
-  $instHtml .= "<tr>
-        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\">" . ($i + 1) . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . allow_html($row['instruction'] ?? '') . "</td>
-        <td style=\"border:1px solid #ddd;padding:8px;\">" . nl2br_h($row['notes'] ?? '') . "</td>
+foreach ($instr as $i => $inst) {
+  $instrHtml .= "<tr>
+        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\"> " . ($i+1) . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\"> " . ($inst['instruction'] ?? '') . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;\"> " . nl2br_h($inst['notes'] ?? '') . "</td>
     </tr>";
 }
-$instHtml .= '</tbody></table>';
-if (empty($inst)) {
-  $instHtml = '<p style="font-style:italic;color:#666;margin:15px 0;">None</p>';
+$instrHtml .= '</tbody></table>';
+if (empty($instr)) {
+  $instrHtml = '<p style="font-style:italic;color:#666;margin:15px 0;">None</p>';
 }
 
 // ------------------------------------------------------------------
-// 5. ATTACHMENTS (clickable links)
+// 5. ATTACHMENTS LIST
 // ------------------------------------------------------------------
-$attachHtml = '';
-if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
-  $attachHtml = '<h2 style="margin-top:30px;font-size:14px;">Attachments</h2>
-        <ul style="font-size:11px;margin:10px 0 20px 20px;">';
-  foreach ($sea['attachments'] as $url) {
-    $name = basename($url);
-    $fullUrl = (strpos($url, 'http') === 0) ? $url : 'http://' . $_SERVER['HTTP_HOST'] . $url;
-    $attachHtml .= "<li><a href=\"{$fullUrl}\" target=\"_blank\">" . h($name) . "</a></li>";
-  }
-  $attachHtml .= '</ul>';
+$attach = $sea['attachments'] ?? [];
+$attachHtml = '<ul style="margin:15px 0;padding-left:20px;">';
+foreach ($attach as $url) {
+  $name = basename($url);
+  $attachHtml .= '<li><a href="' . h($url) . '">' . h($name) . '</a></li>';
+}
+$attachHtml .= '</ul>';
+if (empty($attach)) {
+  $attachHtml = '<p style="font-style:italic;color:#666;margin:15px 0;">None</p>';
 }
 
 // ------------------------------------------------------------------
-// 6. DEVICE DISPLAY (FIXED: handles array safely)
+// 6. MAIN HTML — RESTORED ORIGINAL FORMAT
 // ------------------------------------------------------------------
-$deviceDisplay = '';
-if (!empty($sea['device'])) {
-  $devices = is_array($sea['device']) ? $sea['device'] : [$sea['device']];
-  $deviceDisplay = h(implode(', ', array_filter($devices)));
-} else {
-  $deviceDisplay = '—';
-}
+$html = '<style>
+    body { font-family: "Segoe UI", Tahoma, sans-serif; font-size: 12pt; color: #333; line-height: 1.4; }
+    h1 { font-size: 18pt; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+    h2 { font-size: 14pt; margin-top: 30px; margin-bottom: 10px; }
+    p { margin: 5px 0; font-size: 11pt; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10pt; }
+    th, td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }
+    th { background: #f8f9fa; text-align: left; }
+    .italic-none { font-style: italic; color: #666; }
+    img { max-width: 100%; height: auto; display: block; margin: 10px 0; border: 1px solid #eee; page-break-inside: avoid; }
+</style>
 
-// Helper: safely allow basic HTML in rich text fields + convert newlines
-function allow_html($s)
-{
-  $s = $s ?? '—';
-  // Convert newlines to <br> first (before any existing HTML)
-  $s = nl2br($s);
-  // If you want to sanitize (recommended for untrusted input):
-  // Require HTMLPurifier via Composer, then:
-  // $purifier = new HTMLPurifier();
-  // return $purifier->purify($s);
-  // Allowed tags: p, br, b, i, u, strong, em, ul, ol, li, etc.
-  return $s;  // Raw with <br> added; tags from input will render
-}
+<h1>Simulator Engineering Authorization</h1>
+<p>SEA ID: ' . h($sea['id']) . ' | Version: ' . h($sea['version'] ?? '1') . '</p>
+<p>Requester: ' . h($sea['requester']) . '</p>
+<p>Fleet: ' . h($sea['fleet']) . ' | Device: ' . h(implode(', ', (array)$sea['device'])) . '</p>
+<p>EA Number: ' . h($sea['ea_number']) . ' | Priority: ' . h($sea['priority']) . '</p>
+<p>Target Date: ' . h($sea['target_date']) . ' | Revision: ' . h($sea['revision']) . '</p>
+<p>Timestamp: ' . h($sea['timestamp']) . '</p>
 
+<h2>Description</h2>
+<p>' . nl2br_h($sea['description']) . '</p>
 
-// ------------------------------------------------------------------
-// 7. FINAL HTML
-// ------------------------------------------------------------------
-$html = <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {font-family:Arial,Helvetica,sans-serif;margin:30px;font-size:12px;line-height:1.5;}
-        h1 {text-align:center;color:#2c3e50;margin-bottom:5px;}
-        h2 {font-size:14px;color:#2c3e50;margin:25px 0 10px 0;}
-        .label {font-weight:bold;display:inline-block;width:150px;color:#444;}
-        p {margin:8px 0;}
-        table {width:100%;border-collapse:collapse;margin:15px 0;}
-        th, td {border:1px solid #ddd;padding:8px;font-size:11px;}
-        th {background:#f8f9fa;text-align:left;}
-        a {color:#0066cc;text-decoration:underline;}
-        a:hover {text-decoration:none;}
-        .generated {text-align:center;color:#666;font-size:10px;margin-top:20px;}
-    </style>
-</head>
-<body>
-    <h1>Simulator Engineering Authorization (SEA)</h1>
-    <p class="generated"><strong>Generated:</strong> {{DATE}}</p>
+<h2>Justification</h2>
+<p>' . nl2br_h($sea['justification']) . '</p>
 
-    <p style="margin:8px 0;">
-        <span class="label">EA#:</span> {{EA_NUMBER}}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <span class="label">Revision:</span> {{REVISION}}
-        &nbsp;&nbsp;|&nbsp;&nbsp;
-        <span class="label">SEA ID:</span> {{SEA_ID}}
-    </p>
+<h2>Impact</h2>
+<p>' . nl2br_h($sea['impact']) . '</p>
 
-    <p><span class="label">Description:</span><br>{{DESCRIPTION}}</p>
-    <!-- <p><span class="label">SEA ID:</span> {{SEA_ID}}</p>
-    <p><span class="label">EA#:</span> {{EA_NUMBER}}</p>
-    <p><span class="label">Revision:</span> {{REVISION}}</p> -->
-    <p><span class="label">Fleet:</span> {{FLEET}}</p>
-    <p><span class="label">Device(s):</span> {{DEVICES}}</p>
-    <p><span class="label">Requester:</span> {{REQUESTER}}</p>
-    <p><span class="label">Status:</span> {{STATUS}}</p>  <!-- NEW: Status display -->
-    
-    <p><span class="label">Justification:</span><br>{{JUSTIFICATION}}</p>
-    <p><span class="label">Impact:</span><br>{{IMPACT}}</p>
-    <p><span class="label">Priority:</span> {{PRIORITY}}</p>
-    <p><span class="label">Target Date:</span> {{TARGET_DATE}}</p>
+<h2>Affected Parts</h2>
+' . $partsHtml . '
 
-    <h2>Affected Parts</h2>
-    {{PARTS_TABLE}}
+<h2>Work Instructions</h2>
+' . $instrHtml . '
 
-    <h2>Work Instructions</h2>
-    {{INSTRUCTIONS_TABLE}}
-
-    {{ATTACHMENTS}}
-</body>
-</html>
-HTML;
-
-
-// Replace placeholders
-$replacements = [
-  '{{DATE}}'           => date('Y-m-d H:i:s'),
-  '{{SEA_ID}}'         => h($sea['id'] ?? ''),
-  '{{EA_NUMBER}}'      => h($sea['ea_number'] ?? '—'),
-  '{{REVISION}}'       => h($sea['revision'] ?? '—'),
-  '{{FLEET}}'          => h($sea['fleet'] ?? '—'),
-  '{{DEVICES}}'        => $deviceDisplay,
-  '{{REQUESTER}}'      => h($sea['requester'] ?? '—'),
-  '{{STATUS}}'         => h($sea['status'] ?? 'Planning'),  // NEW
-  '{{DESCRIPTION}}'    => nl2br_h($sea['description'] ?? '—'),
-  '{{JUSTIFICATION}}'  => allow_html($sea['justification'] ?? '—'),
-  '{{IMPACT}}'          => nl2br_h($sea['impact'] ?? '—'),
-  '{{PRIORITY}}'       => h($sea['priority'] ?? '—'),
-  '{{TARGET_DATE}}'    => h($sea['target_date'] ?? '—'),
-  '{{PARTS_TABLE}}'    => $partsHtml,
-  '{{INSTRUCTIONS_TABLE}}' => $instHtml,
-  '{{ATTACHMENTS}}'     => $attachHtml,
-];
-
-$html = str_replace(array_keys($replacements), array_values($replacements), $html);
+<h2>Attachments</h2>
+' . $attachHtml . '';
 
 // ------------------------------------------------------------------
-// 8. CREATE & SEND PDF
+// 7. FIX IMAGES FOR PDF (CRITICAL)
 // ------------------------------------------------------------------
-ob_clean();
+$projectRoot = realpath(__DIR__ . '/../../');
+
+// Unescape JSON slashes
+$html = str_replace(['\\/', '\/'], '/', $html);
+
+// Convert relative to absolute file paths
+$html = preg_replace_callback(
+    '#src=["\'](data/uploads/SEA/[^"\']+)["\']#i',
+    function($m) use ($projectRoot) {
+        $relative = $m[1];
+        $fullPath = $projectRoot . '/public/' . $relative;  // Since data is in public/data
+        if (file_exists($fullPath)) {
+            return 'src="file:///' . str_replace('\\', '/', $fullPath) . '"';
+        }
+        return $m[0];
+    },
+    $html
+);
+
+// ------------------------------------------------------------------
+// 8. mPDF SETUP
+// ------------------------------------------------------------------
 $mpdf = new Mpdf([
-  'format' => 'Letter',
+  'mode' => 'utf-8',
+  'format' => 'A4',
   'margin_left' => 15,
   'margin_right' => 15,
-  'margin_top' => 30,  // Increased to make space for header
-  'margin_bottom' => 30,  // Increased to make space for footer
-  'margin_header' => 10,  // Space between header and body
-  'margin_footer' => 10,  // Space between footer and body
+  'margin_top' => 30,
+  'margin_bottom' => 30,
+  'margin_header' => 10,
+  'margin_footer' => 10,
 ]);
 
-// Set Header (with image - replace 'path/to/logo.png' with your actual image path)
-$header = '
-<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
-    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">  <!-- Adjust width as needed -->
-</div>';
-$mpdf->SetHTMLHeader($header);
+$mpdf->SetHTMLHeader('
+<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
+    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">
+</div>');
 
-// Set Footer (page x of x and SEA version)
-$footer = '
+$mpdf->SetHTMLFooter('
 <div style="text-align: right; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
     Page {PAGENO} of {nbpg} | Version: ' . h($sea['version'] ?? '1') . '
-</div>';
-$mpdf->SetHTMLFooter($footer);
+</div>');
 
 $mpdf->WriteHTML($html);
 
 // ------------------------------------------------------------------
-// 9. EMBED ATTACHED PDF FILES (if local)
-// ------------------------------------------------------------------
-/*
-if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
-  foreach ($sea['attachments'] as $url) {
-    // Only process local files (not external URLs)
-    if (strpos($url, 'http') === 0) continue;
-
-    $filePath = $_SERVER['DOCUMENT_ROOT'] . parse_url($url, PHP_URL_PATH);
-    if (!is_file($filePath)) continue;
-
-    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-    if ($ext !== 'pdf') continue;
-
-    try {
-      $mpdf->AddPage();
-      $mpdf->SetImportUse();
-      $pageCount = $mpdf->SetSourceFile($filePath);
-      for ($i = 1; $i <= $pageCount; $i++) {
-        $tpl = $mpdf->ImportPage($i);
-        $mpdf->UseTemplate($tpl);
-        if ($i < $pageCount) {
-          $mpdf->AddPage();
-        }
-      }
-    } catch (Exception $e) {
-      // Silently fail on corrupt PDF
-      error_log("Failed to embed attachment: $filePath - " . $e->getMessage());
-    }
-  }
-}
-*/
-// ------------------------------------------------------------------
-// 10. OUTPUT
+// OUTPUT
 // ------------------------------------------------------------------
 $filename = 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf';
 $mpdf->Output($filename, 'D');
