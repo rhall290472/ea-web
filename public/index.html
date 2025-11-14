@@ -37,6 +37,13 @@
     referrerpolicy="origin"></script>
   <!-- ====== CRITICAL: DEFINE FUNCTIONS FIRST ====== -->
   <script>
+    // BLOCK TINYCE STATS GLOBALLY — RUNS IMMEDIATELY
+  (function() {
+    if (window.tinymce) {
+      window.tinymce.stateless = true;
+      console.log('TinyMCE stats disabled globally');
+    }
+  })();
     // GLOBAL: Must be defined BEFORE any inline onclick
     function loadExistingAttachments(attachments) {
       const $c = $('#existingAttachments').empty();
@@ -364,6 +371,7 @@
         // allow manual resize and enable autoresize plugin to auto-grow the editor
         resize: true,
         autoresize_bottom_margin: 12,
+        stateless: true,
         setup: function (editor) {
           // keep the hidden textarea in sync (TinyMCE does this automatically)
           editor.on('change keyup', function () {
@@ -505,6 +513,7 @@
             statusbar: true,
             resize: true,
             autoresize_bottom_margin: 12,
+            stateless: true,
             setup: ed => {
               ed.on('change keyup', () => {
                 ed.save();
@@ -887,6 +896,7 @@
                   statusbar: true,
                   resize: true,
                   autoresize_bottom_margin: 12,
+                  stateless: true,
                   setup: ed => {
                     ed.on('change keyup', () => {
                       ed.save();
@@ -1048,7 +1058,9 @@
           .val('');
 
         $('.alert').remove();
-      }    </script>
+      }    
+      
+      </script>
 
     <!-- Overwrite Confirmation Modal -->
     <div class="modal fade" id="overwriteModal" tabindex="-1">
