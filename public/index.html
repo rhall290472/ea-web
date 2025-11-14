@@ -38,12 +38,12 @@
   <!-- ====== CRITICAL: DEFINE FUNCTIONS FIRST ====== -->
   <script>
     // BLOCK TINYCE STATS GLOBALLY — RUNS IMMEDIATELY
-  (function() {
-    if (window.tinymce) {
-      window.tinymce.stateless = true;
-      console.log('TinyMCE stats disabled globally');
-    }
-  })();
+    (function () {
+      if (window.tinymce) {
+        window.tinymce.stateless = true;
+        console.log('TinyMCE stats disabled globally');
+      }
+    })();
     // GLOBAL: Must be defined BEFORE any inline onclick
     function loadExistingAttachments(attachments) {
       const $c = $('#existingAttachments').empty();
@@ -343,6 +343,12 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
+      // BLOCK TINYCE STATS GLOBALLY
+      setTimeout(() => {
+        if (window.tinymce) {
+          window.tinymce.stateless = true;
+        }
+      }, 100);
       // -------------------------------------------------
       // Small HTML-escape helper used in templates
       function h(s) {
@@ -563,65 +569,87 @@
         // FORM SUBMIT
         // -------------------------------------------------
         $('#seaForm').on('submit', function (e) {
-          e.preventDefault();
-          const $form = $(this);
-          const $btn = $('#submitBtn');
-          $btn.prop('disabled', true).text('Saving...');
+  // e.preventDefault();  // ← REMOVE THIS LINE (or comment out)
+  // —————— COMMENT OUT ENTIRE AJAX BLOCK BELOW ——————
+  /*
+  const $form = $(this);
+  const $btn = $('#submitBtn');
+  $btn.prop('disabled', true).text('Saving...');
 
-          // Clear old alerts
-          $('.alert').remove();
+  $('.alert').remove();
 
-          // Collect form data
-          const formData = new FormData(this);
-          formData.set('parts_json', JSON.stringify(getParts()));
-          formData.set('instructions_json', JSON.stringify(getInstructions()));
+  const formData = new FormData(this);
 
-          // First, try submit
-          $.ajax({
-            url: './src/submit.php',
-            method: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json',
-            success: function (res) {
-              if (res.conflict) {
-                // SHOW MODAL with conflict list
-                const $list = $('#conflictList').empty();
-                res.conflicting_files.forEach(f => {
-                  $list.append(`<li><code>${f}</code></li>`);
-                });
+  getParts().forEach((p, i) => {
+    formData.append(`parts[${i}][part]`, p.part);
+    formData.append(`parts[${i}][desc]`, p.desc);
+    formData.append(`parts[${i}][type]`, p.type);
+    formData.append(`parts[${i}][qty]`, p.qty);
+  });
 
-                const modal = new bootstrap.Modal('#overwriteModal');
-                $('#confirmOverwrite').off('click').on('click', function () {
-                  modal.hide();
-                  // Resubmit with overwrite flag
-                  res.conflicting_files.forEach(f => {
-                    formData.append('overwrite[]', f);
-                  });
-                  $btn.prop('disabled', true).text('Overwriting...');
-                  $.ajax({
-                    url: './src/submit.php',
-                    method: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    dataType: 'json',
-                    success: handleSuccess,
-                    error: handleError
-                  });
-                });
-                modal.show();
-                $btn.prop('disabled', false).text(
-                  $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-                );
-              } else {
-                handleSuccess(res);
-              }
-            },
-            error: handleError
-          });
+  getInstructions().forEach((instr, i) => {
+    formData.append(`instructions[${i}][instruction]`, instr.instruction);
+    formData.append(`instructions[${i}][notes]`, instr.notes);
+  });
 
+  if ($('#sea_action').val() === 'update') {
+    $('#existingAttachments input[name="keep_attachments[]"]').each(function () {
+      formData.append('keep_attachments[]', this.value);
+    });
+  }
+
+  $.ajax({
+    url: './src/submit.php',
+    method: 'POST',
+    data: formData,
+    processData: false,
+    contentType: false,
+    dataType: 'json',
+    cache: false,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    },
+    success: function (res) {
+      if (res.conflict) {
+        // ... conflict modal ...
+      } else {
+        handleSuccess(res);
+      }
+    },
+    error: function (xhr) {
+      showAlert('danger',
+        xhr.responseJSON?.message ||
+        xhr.status === 406 ? 'Server rejected the request (406). Check file size / mod_security.' :
+        'Network error – check console');
+      $btn.prop('disabled', false).text(
+        $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+      );
+    }
+  });
+  */
+  // —————— END COMMENT ——————
+
+  // —————— NEW: NORMAL FORM SUBMIT (WORKAROUND) ——————
+  const $btn = $('#submitBtn');
+  $btn.prop('disabled', true).text('Saving...');
+
+  showAlert('info', 'Submitting... (page will reload)');
+
+  // Optional: Basic validation
+  if (!$('#requester').val().trim()) {
+    e.preventDefault();
+    showAlert('danger', 'Author is required');
+    $btn.prop('disabled', false).text(
+      $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+    );
+    return;
+  }
+
+  // Let the browser submit the form normally
+  // No AJAX → no mod_security 406
+});
+
+          // -----------------------------------------------------------------
           function handleSuccess(res) {
             if (res.success) {
               showAlert('success', res.message);
@@ -636,11 +664,7 @@
                 history.replaceState(null, null, '?id=' + res.sea_id);
               }
 
-              // Refresh attachments list
               loadExistingAttachments(res.attachments || []);
-
-              // Optional: auto-download PDF
-              // if (res.pdf) downloadPdf(res.pdf, res.pdf_name);
             } else {
               showAlert('danger', res.message || 'Unknown error');
             }
@@ -648,15 +672,7 @@
               $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
             );
           }
-
-          function handleError(xhr) {
-            showAlert('danger', xhr.responseJSON?.message || 'Network error');
-            $btn.prop('disabled', false).text(
-              $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-            );
-          }
         });
-
 
         function showAlert(type, message) {
           const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
@@ -677,38 +693,23 @@
         // -------------------------------------------------
         // NAVIGATION
         // -------------------------------------------------
+        // SHOW CREATE FORM — CALL resetForm(true)
         window.showCreateForm = function () {
           hideAll();
-          resetForm(true);               // <-- NEW
+          resetForm(true); // ← MUST PASS true
           $('#createForm').removeClass('hidden');
 
-          if (!$('#sea_id').val()) {
-            // === NEW SEA: Setup form ===
-            $('#sea_action').val('create');
-            $('#formTitle').text('New SEA');
-            $('#submitBtn').text('Create SEA');
-            stepCounter = 1;
-            $('#partsTable tbody').empty();
-            $('#instrTable tbody').empty();
-            $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
-            // Clear parts table
-            $('#partsTable tbody').empty();
+          $('#sea_action').val('create');
+          $('#formTitle').text('New SEA');
+          $('#submitBtn').text('Create SEA');
+          $('#sea_id').val('');
+          $('#display_id').val('');
+          stepCounter = 1;
+          $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
+          addInstrRow();
 
-            // ONLY add a blank row when creating a new SEA
-            if (isCreate) {
-              addPartRow();
-            }
-            addInstrRow();
-
-            // === PREVIEW ID: Generate initial preview ===
-            generateIdPreview();
-
-            // === LIVE UPDATE: When fleet changes, update ID preview ===
-            $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
-          } else {
-            // === EDIT MODE: Don't mess with existing ID ===
-            $('#fleet').off('change.idPreview'); // Remove listener if editing
-          }
+          generateIdPreview();
+          $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
         };
 
         // === HELPER: Generate and display SEA ID preview ===
@@ -856,11 +857,12 @@
           $('#sea_id').val(id);
           $('#display_id').val(id);
 
+          resetForm(false);
           // ---- Load JSON -------------------------------------------------
           fetch(`data/sea-${id}.json`)
             .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(d => {
-              resetForm(false);                  // <-- NEW – clean before filling
+              // <-- NEW – clean before filling
               console.log('Loaded SEA data →', d);
 
               // ----- Basic fields -----
@@ -989,7 +991,6 @@
             }
           }
         });
-      });
 
       // -------------------------------------------------
       // COLLECT PARTS DATA
@@ -1023,44 +1024,53 @@
       }
 
       window.removeInstrRow = function (btn) {
-        const editorId = tinymce.get($(btn).closest('tr').find('.instr-text').attr('id'));
-        if (editorId) tinymce.remove(editorId);
+        // destroy TinyMCE instance first
+        const editor = tinymce.get($(btn).closest('tr').find('.instr-text').attr('id'));
+        if (editor) editor.remove();
+
         $(btn).closest('tr').remove();
-        renumberInstr();
+        renumberInstr();               // <-- renumber after delete
+      };
+      // -------------------------------------------------
+      // RE-NUMBER INSTRUCTION ROWS AFTER DELETE
+      // -------------------------------------------------
+      function renumberInstr() {
+        $('#instrTable tbody tr').each(function (i) {
+          $(this).find('td:first').text(i + 1);
+          // also update the hidden textarea name so PHP still receives sequential indexes
+          const $txt = $(this).find('.instr-text');
+          const $notes = $(this).find('.instr-notes');
+          const idx = i;
+          $txt.attr('name', `instructions[${idx}][instruction]`);
+          $notes.attr('name', `instructions[${idx}][notes]`);
+        });
       };
 
 
       // -------------------------------------------------
       // RESET THE WHOLE FORM (including TinyMCE, Select2, tables)
       // -------------------------------------------------
+      // RESET FORM — MUST ACCEPT isCreate
       function resetForm(isCreate = false) {
         const formEl = document.getElementById('seaForm');
-        if (formEl && typeof formEl.reset === 'function') {
-          formEl.reset();
-        }
+        if (formEl?.reset) formEl.reset();
 
         $('#fleet, #device, #priority, #status').val('').trigger('change');
         tinymce.remove('#instrTable .instr-text');
         $('#instrTable tbody').empty();
         $('#partsTable tbody').empty();
 
-        // Only add blank part row when creating
         if (isCreate) {
-          addPartRow();
+          addPartRow(); // Only on new SEA
         }
 
-        $('#existingAttachments')
-          .empty()
-          .html('<small class="text-muted">No attachments</small>');
+        $('#existingAttachments').empty().html('<small class="text-muted">No attachments</small>');
         $('#attachments').val('');
-
-        $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date')
-          .val('');
-
+        $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date').val('');
         $('.alert').remove();
-      }    
-      
-      </script>
+      }
+
+    </script>
 
     <!-- Overwrite Confirmation Modal -->
     <div class="modal fade" id="overwriteModal" tabindex="-1">

@@ -6,9 +6,30 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Mpdf\Mpdf;
 
-ob_start();
+// === ALLOW AJAX REQUESTS ===
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST');
+header('Access-Control-Allow-Headers: X-Requested-With, Content-Type');
 
+
+//Debug
+error_log("POST data: " . print_r($_POST, true));  // Logs to error_log
+error_log("FILES data: " . print_r($_FILES, true));
+
+
+
+
+// === BYPASS mod_security / 406 ===
+if (
+  !isset($_SERVER['HTTP_X_REQUESTED_WITH']) ||
+  strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) !== 'xmlhttprequest'
+) {
+  http_response_code(406);
+  exit(json_encode(['success' => false, 'message' => 'Invalid request']));
+}
+
+// === RESPONSE HOLDER ===
 $response = ['success' => false, 'message' => '', 'sea_id' => ''];
 
 try {
@@ -17,25 +38,26 @@ try {
   }
 
   $action = $_POST['action'] ?? 'create';
-  $sea_id = $_POST['sea_id'] ?? '';  // For create, this will be 'temp-xxx'; for edit, the actual ID
+  $sea_id = $_POST['sea_id'] ?? '';
 
+  // === VALIDATE FLEET ===
   $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
   $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet);
   if ($fleet === '') $fleet = 'UNKNOWN';
 
-  // --- GENERATE NEW SHORT ID IF CREATING ---
+  // === GENERATE SHORT ID (only on create) ===
   if ($action === 'create') {
     $datePart = date('Ymd');
     $randomPart = substr(str_shuffle('0123456789'), 0, 3);
     $short_id = "{$fleet}-{$datePart}-{$randomPart}";
   } else {
-    $short_id = $sea_id;  // For edit, use provided ID
+    $short_id = $sea_id;
   }
 
   $jsonFile = DATA_DIR . '/sea-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $short_id) . '.json';
   $existing = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
 
-  // --- BUILD SEA DATA ---
+  // === BUILD SEA DATA ===
   $sea = [
     'id'             => $short_id,
     'requester'      => $_POST['requester'] ?? $existing['requester'] ?? '',
@@ -53,60 +75,37 @@ try {
     'timestamp'      => date('Y-m-d H:i:s')
   ];
 
-  // --- PARTS TABLE ---
-  $sea['parts_json'] = $_POST['parts_json'] ?? '[]';
-
-  // --- INSTRUCTIONS (TinyMCE) ---
-  $sea['instructions_json'] = $_POST['instructions_json'] ?? '[]';
-
-  // --- RENAME TEMP FOLDER & FIX IMAGE URLS (ONLY ON CREATE) ---
-  $keepAttachments = [];
-  if ($action === 'create') {
-    $oldId = $sea_id;  // 'temp-xxx'
-    $newId = $short_id;
-    $oldDir = UPLOAD_DIR . '/SEA/' . $oldId;
-    $newDir = UPLOAD_DIR . '/SEA/' . $newId;
-
-    if (strpos($oldId, 'temp-') === 0 && is_dir($oldDir)) {
-      if (!rename($oldDir, $newDir)) {
-        throw new Exception('Failed to rename upload directory');
-      }
-    }
-
-    $oldBase = "data/uploads/SEA/{$oldId}";
-$newBase = "data/uploads/SEA/{$newId}";
-
-    // Fix URLs in instructions (for embedded images)
-    $instructions = json_decode($sea['instructions_json'], true) ?? [];
-    foreach ($instructions as &$inst) {
-      if (isset($inst['instruction']) && is_string($inst['instruction'])) {
-        $inst['instruction'] = str_replace($oldBase, $newBase, $inst['instruction']);
-      }
-    }
-    $sea['instructions_json'] = json_encode($instructions);
-
-    // Fix keep_attachments if any (though rare for new)
-    if (!empty($_POST['keep_attachments']) && is_array($_POST['keep_attachments'])) {
-      foreach ($_POST['keep_attachments'] as $url) {
-        $keepAttachments[] = str_replace($oldBase, $newBase, $url);
-      }
-    }
-  } else {
-    // For edit: no rename needed
-    if (!empty($_POST['keep_attachments']) && is_array($_POST['keep_attachments'])) {
-      $keepAttachments = $_POST['keep_attachments'];
-    }
+  // === PARTS & INSTRUCTIONS (from individual fields) ===
+  $parts = [];
+  foreach ($_POST['parts'] ?? [] as $p) {
+    $parts[] = [
+      'part' => $p['part'] ?? '',
+      'desc' => $p['desc'] ?? '',
+      'type' => $p['type'] ?? '',
+      'qty'  => $p['qty']  ?? ''
+    ];
   }
+  $sea['parts_json'] = json_encode($parts);
 
-  // --- ATTACHMENTS (NEW FILES) ---
+  $instructions = [];
+  foreach ($_POST['instructions'] ?? [] as $i) {
+    $instructions[] = [
+      'instruction' => $i['instruction'] ?? '',
+      'notes'       => $i['notes']       ?? ''
+    ];
+  }
+  $sea['instructions_json'] = json_encode($instructions);
+
+  // === ATTACHMENTS: Keep existing + upload new ===
+  $keepAttachments = $_POST['keep_attachments'] ?? [];
   $newAttachments = [];
   $conflicts = [];
   $overwrite = $_POST['overwrite'] ?? [];
 
-  if (!empty($_FILES['attachments']['name'][0])) {
-    $uploadDir = UPLOAD_DIR . '/SEA/' . $short_id;
-    $webBase = getWebBaseUrl($short_id);
+  $uploadDir = UPLOAD_DIR . '/SEA/' . $short_id;
+  $webBase = getWebBaseUrl($short_id);
 
+  if (!empty($_FILES['attachments']['name'][0])) {
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
       throw new Exception('Failed to create upload directory');
     }
@@ -129,44 +128,42 @@ $newBase = "data/uploads/SEA/{$newId}";
       if (move_uploaded_file($_FILES['attachments']['tmp_name'][$k], $targetPath)) {
         $newAttachments[] = $webUrl;
       } else {
-        throw new Exception('Failed to upload file: ' . $name);
+        throw new Exception("Failed to upload: $name");
       }
     }
   }
 
+  // === CONFLICT HANDLING ===
   if (!empty($conflicts)) {
     ob_end_clean();
-    $response = [
+    echo json_encode([
       'success' => false,
       'conflict' => true,
       'conflicting_files' => array_unique($conflicts),
-      'message' => 'File' . (count($conflicts) > 1 ? 's' : '') . ' already exist: ' . implode(', ', $conflicts) . '. Overwrite?'
-    ];
-    echo json_encode($response);
+      'message' => 'File(s) already exist: ' . implode(', ', $conflicts)
+    ]);
     exit;
   }
 
   $sea['attachments'] = array_merge($keepAttachments, $newAttachments);
 
-  // --- SAVE JSON ---
+  // === SAVE JSON ===
   $jsonTest = json_encode($sea, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
   if (json_last_error() !== JSON_ERROR_NONE) {
     throw new Exception('JSON encode error: ' . json_last_error_msg());
   }
 
   if (file_put_contents($jsonFile, $jsonTest) === false) {
-    throw new Exception("Failed to write to $jsonFile - check permissions");
+    throw new Exception("Failed to write JSON file - check permissions");
   }
 
-  ob_end_clean();
+  // === SUCCESS ===
+  // === SUCCESS: REDIRECT BACK TO APP (NON-AJAX) ===
+  $redirectUrl = '../index.html?id=' . $short_id . '&msg=success';
+  header('Location: ' . $redirectUrl);
+  exit;  // Stop PHP execution
 
-  $response = [
-    'success' => true,
-    'message' => ($action === 'create' ? 'SEA created' : 'SEA updated') . ' successfully!',
-    'sea_id' => $sea['id'],
-    'pdf' => '', // You can re-enable PDF later
-    'pdf_name' => 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf'
-  ];
+
 } catch (Exception $e) {
   ob_end_clean();
   $response['message'] = 'Error: ' . $e->getMessage();
@@ -174,6 +171,3 @@ $newBase = "data/uploads/SEA/{$newId}";
   ob_end_clean();
   $response['message'] = 'Server error: ' . $e->getMessage();
 }
-
-echo json_encode($response);
-exit;
