@@ -114,7 +114,7 @@ $html = '<style>
     img { max-width: 100%; height: auto; display: block; margin: 10px 0; border: 1px solid #eee; page-break-inside: avoid; }
 </style>
 
-<h1>Simulator Engineering Authorization</h1>
+<h1 style="text-align: center; margin: 20px 0; padding-bottom: 10px; border-bottom: 1px solid #ddd;">Simulator Engineering Authorization</h1>
 <p>SEA ID: ' . h($sea['id']) .'| EA Number: ' . h($sea['ea_number']) . ' | EA Revision: ' . h($sea['revision']) .'</p>
 <p>Priority: ' . h($sea['priority']) .' | Target Date: ' . h($sea['target_date']) .' | Status: ' . h($sea['stauts']) .'</p>
 <p>Fleet: ' . h($sea['fleet']) . ' | Device: ' . h(implode(', ', (array)$sea['device'])) . '</p>
