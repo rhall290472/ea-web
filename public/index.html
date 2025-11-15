@@ -44,35 +44,38 @@
         console.log('TinyMCE stats disabled globally');
       }
     })();
+
     // GLOBAL: Must be defined BEFORE any inline onclick
-    function loadExistingAttachments(attachments) {
-      const $c = $('#existingAttachments').empty();
-      if (!attachments || !attachments.length) {
-        $c.html('<small class="text-muted">No attachments</small>');
-        return;
-      }
+function loadExistingAttachments(attachments) {
+  // CRITICAL: Remove ALL old hidden keep_attachments inputs
+  $('input[name="keep_attachments[]"]').remove();
 
-      const list = attachments.map(url => {
-        const name = url.split('/').pop();
-        const full = url.startsWith('http') ? url : location.origin + url;
+  const $c = $('#existingAttachments').empty();
+  if (!attachments || !attachments.length) {
+    $c.html('<small class="text-muted">No attachments</small>');
+    return;
+  }
 
-        // Escape for HTML attribute
-        const escAttr = url.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        // Escape for JS string (single quotes)
-        const escJS = url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+  const list = attachments.map(url => {
+    const name = url.split('/').pop();
+    const full = url.startsWith('http') ? url : location.origin + url;
 
-        return `<div class="d-flex align-items-center mb-1 p-2 border rounded bg-light">
-                  <a href="${full}" target="_blank" class="text-decoration-none me-2 flex-grow-1">${name}</a>
-                  <button type="button" class="btn btn-sm btn-outline-danger"
-                          onclick="removeExistingAttachment(this, '${escJS}')">Remove</button>
-                  <input type="hidden" name="keep_attachments[]" value="${escAttr}">
-                </div>`;
-      }).join('');
+    const escAttr = url.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const escJS = url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
-      $c.html(`<div class="border p-2 rounded bg-white mb-2">
-                <small class="text-muted d-block mb-2"><strong>Current attachments:</strong></small>${list}
-              </div>`);
-    }
+    return `<div class="d-flex align-items-center mb-1 p-2 border rounded bg-light">
+              <a href="${full}" target="_blank" class="text-decoration-none me-2 flex-grow-1">${name}</a>
+              <button type="button" class="btn btn-sm btn-outline-danger"
+                      onclick="removeExistingAttachment(this, '${escJS}')">Remove</button>
+              <input type="hidden" name="keep_attachments[]" value="${escAttr}">
+            </div>`;
+  }).join('');
+
+  $c.html(`<div class="border p-2 rounded bg-white mb-2">
+            <small class="text-muted d-block mb-2"><strong>Current attachments:</strong></small>${list}
+          </div>`);
+}
+
 
     function removeExistingAttachment(btn, url) {
       if (!confirm('Remove this attachment?')) return;
@@ -268,7 +271,7 @@
 
           <!-- Impact -->
           <div class="col-md-12">
-            <label for="impact" class="form-label">Impact Assessment</label>
+            <label for="impact" class="form-label">Impact On Training Device</label>
             <textarea class="form-control" id="impact" name="impact" rows="5"></textarea>
           </div>
 
@@ -568,429 +571,473 @@
         // -------------------------------------------------
         // FORM SUBMIT
         // -------------------------------------------------
+        // -------------------------------------------------
+        // FORM SUBMIT (AJAX) - RESTORED & FIXED
+        // -------------------------------------------------
         $('#seaForm').on('submit', function (e) {
-  // e.preventDefault();  // ← REMOVE THIS LINE (or comment out)
-  // —————— COMMENT OUT ENTIRE AJAX BLOCK BELOW ——————
-  /*
-  const $form = $(this);
-  const $btn = $('#submitBtn');
-  $btn.prop('disabled', true).text('Saving...');
+          e.preventDefault(); // ← RESTORE THIS LINE
 
-  $('.alert').remove();
+          const $form = $(this);
+          const $btn = $('#submitBtn');
+          $btn.prop('disabled', true).text('Saving...');
 
-  const formData = new FormData(this);
+          $('.alert').remove();
 
-  getParts().forEach((p, i) => {
-    formData.append(`parts[${i}][part]`, p.part);
-    formData.append(`parts[${i}][desc]`, p.desc);
-    formData.append(`parts[${i}][type]`, p.type);
-    formData.append(`parts[${i}][qty]`, p.qty);
-  });
+          const formData = new FormData(this);
 
-  getInstructions().forEach((instr, i) => {
-    formData.append(`instructions[${i}][instruction]`, instr.instruction);
-    formData.append(`instructions[${i}][notes]`, instr.notes);
-  });
+          // === COLLECT PARTS ===
+          getParts().forEach((p, i) => {
+            formData.append(`parts[${i}][part]`, p.part);
+            formData.append(`parts[${i}][desc]`, p.desc);
+            formData.append(`parts[${i}][type]`, p.type);
+            formData.append(`parts[${i}][qty]`, p.qty);
+          });
 
-  if ($('#sea_action').val() === 'update') {
-    $('#existingAttachments input[name="keep_attachments[]"]').each(function () {
-      formData.append('keep_attachments[]', this.value);
-    });
-  }
+          // === COLLECT INSTRUCTIONS ===
+          getInstructions().forEach((instr, i) => {
+            formData.append(`instructions[${i}][instruction]`, instr.instruction);
+            formData.append(`instructions[${i}][notes]`, instr.notes);
+          });
 
-  $.ajax({
-    url: './src/submit.php',
-    method: 'POST',
-    data: formData,
-    processData: false,
-    contentType: false,
-    dataType: 'json',
-    cache: false,
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest'
-    },
-    success: function (res) {
-      if (res.conflict) {
-        // ... conflict modal ...
-      } else {
-        handleSuccess(res);
-      }
-    },
-    error: function (xhr) {
-      showAlert('danger',
-        xhr.responseJSON?.message ||
-        xhr.status === 406 ? 'Server rejected the request (406). Check file size / mod_security.' :
-        'Network error – check console');
-      $btn.prop('disabled', false).text(
-        $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-      );
-    }
-  });
-  */
-  // —————— END COMMENT ——————
-
-  // —————— NEW: NORMAL FORM SUBMIT (WORKAROUND) ——————
-  const $btn = $('#submitBtn');
-  $btn.prop('disabled', true).text('Saving...');
-
-  showAlert('info', 'Submitting... (page will reload)');
-
-  // Optional: Basic validation
-  if (!$('#requester').val().trim()) {
-    e.preventDefault();
-    showAlert('danger', 'Author is required');
-    $btn.prop('disabled', false).text(
-      $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-    );
-    return;
-  }
-
-  // Let the browser submit the form normally
-  // No AJAX → no mod_security 406
-});
-
-          // -----------------------------------------------------------------
-          function handleSuccess(res) {
-            if (res.success) {
-              showAlert('success', res.message);
-              $('html, body').animate({ scrollTop: 0 }, 300);
-
-              if ($('#sea_action').val() === 'create') {
-                $('#sea_id').val(res.sea_id);
-                $('#display_id').val(res.sea_id);
-                $('#sea_action').val('update');
-                $('#formTitle').text('Edit SEA – ' + res.sea_id);
-                $('#submitBtn').text('Update SEA');
-                history.replaceState(null, null, '?id=' + res.sea_id);
-              }
-
-              loadExistingAttachments(res.attachments || []);
-            } else {
-              showAlert('danger', res.message || 'Unknown error');
-            }
-            $btn.prop('disabled', false).text(
-              $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
-            );
+          // === KEEP EXISTING ATTACHMENTS ===
+          if ($('#sea_action').val() === 'update') {
+            $('#existingAttachments input[name="keep_attachments[]"]').each(function () {
+              formData.append('keep_attachments[]', this.value);
+            });
           }
+
+          // === AJAX SUBMIT ===
+          $.ajax({
+            url: './src/submit.php',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            cache: false,
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function (res) {
+              if (res.conflict) {
+                // Show overwrite modal
+                const $list = $('#conflictList').empty();
+                res.conflicting_files.forEach(f => $list.append(`<li>${f}</li>`));
+                $('#confirmOverwrite').off('click').on('click', function () {
+                  res.conflicting_files.forEach(f => formData.append('overwrite[]', f));
+                  $('#overwriteModal').modal('hide');
+                  $btn.prop('disabled', true).text('Overwriting...');
+                  $.ajax({
+                    url: './src/submit.php',
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    cache: false,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: res => handleSuccess(res, $btn),
+                    error: xhr => handleError(xhr, $btn)
+                  });
+                });
+                $('#overwriteModal').modal('show');
+              } else {
+                handleSuccess(res, $btn);
+              }
+            },
+            error: function (xhr) {
+              handleError(xhr, $btn);
+            }
+          });
         });
 
-        function showAlert(type, message) {
-          const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
+        // === SUCCESS HANDLER ===
+        function handleSuccess(res, $btn) {
+          if (res.success) {
+            showAlert('success', res.message);
+            $('html, body').animate({ scrollTop: 0 }, 300);
+
+            if ($('#sea_action').val() === 'create') {
+              const newId = res.sea_id;
+              $('#sea_id').val(newId);
+              $('#display_id').val(newId);
+              $('#sea_action').val('update');
+              $('#formTitle').text('Edit SEA – ' + newId);
+              $('#submitBtn').text('Update SEA');
+              history.replaceState(null, null, '?id=' + newId);
+            }
+
+            loadExistingAttachments(res.attachments || []);
+          } else {
+            showAlert('danger', res.message || 'Unknown error');
+          }
+          $btn.prop('disabled', false).text(
+            $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+          );
+        }
+
+        // === ERROR HANDLER ===
+        function handleError(xhr, $btn) {
+          let msg = 'Network error';
+          if (xhr.responseJSON?.message) {
+            msg = xhr.responseJSON.message;
+          } else if (xhr.status === 406) {
+            msg = 'Request blocked by server (406). Check file size or mod_security rules.';
+          } else if (xhr.status === 500) {
+            msg = 'Server error. Check logs.';
+          }
+          showAlert('danger', msg);
+          console.error('AJAX Error:', xhr);
+          $btn.prop('disabled', false).text(
+            $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+          );
+        }
+        // Let the browser submit the form normally
+        // No AJAX → no mod_security 406
+      });
+
+      // -----------------------------------------------------------------
+      function handleSuccess(res) {
+        if (res.success) {
+          showAlert('success', res.message);
+          $('html, body').animate({ scrollTop: 0 }, 300);
+
+          if ($('#sea_action').val() === 'create') {
+            $('#sea_id').val(res.sea_id);
+            $('#display_id').val(res.sea_id);
+            $('#sea_action').val('update');
+            $('#formTitle').text('Edit SEA – ' + res.sea_id);
+            $('#submitBtn').text('Update SEA');
+            history.replaceState(null, null, '?id=' + res.sea_id);
+          }
+
+          loadExistingAttachments(res.attachments || []);
+        } else {
+          showAlert('danger', res.message || 'Unknown error');
+        }
+        $btn.prop('disabled', false).text(
+          $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+        );
+      }
+
+      function showAlert(type, message) {
+        const alert = `<div class="alert alert-${type} alert-dismissible fade show mt-3" role="alert">
           ${message}
           <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
-          $('#createForm').prepend(alert);
-          $('html, body').animate({ scrollTop: 0 }, 300);
-        }
+        $('#createForm').prepend(alert);
+        $('html, body').animate({ scrollTop: 0 }, 300);
+      }
 
-        function downloadPdf(base64, filename) {
-          const link = document.createElement('a');
-          link.href = 'data:application/pdf;base64,' + base64;
-          link.download = filename;
-          link.click();
-        }
+      function downloadPdf(base64, filename) {
+        const link = document.createElement('a');
+        link.href = 'data:application/pdf;base64,' + base64;
+        link.download = filename;
+        link.click();
+      }
 
-        // -------------------------------------------------
-        // NAVIGATION
-        // -------------------------------------------------
-        // SHOW CREATE FORM — CALL resetForm(true)
-        window.showCreateForm = function () {
-          hideAll();
-          resetForm(true); // ← MUST PASS true
-          $('#createForm').removeClass('hidden');
+      // -------------------------------------------------
+      // NAVIGATION
+      // -------------------------------------------------
+      // SHOW CREATE FORM — CALL resetForm(true)
+      window.showCreateForm = function () {
+        hideAll();
+        resetForm(true); // ← MUST PASS true
+        $('#createForm').removeClass('hidden');
 
-          $('#sea_action').val('create');
-          $('#formTitle').text('New SEA');
-          $('#submitBtn').text('Create SEA');
-          $('#sea_id').val('');
-          $('#display_id').val('');
-          stepCounter = 1;
-          $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
-          addInstrRow();
+        $('#sea_action').val('create');
+        $('#formTitle').text('New SEA');
+        $('#submitBtn').text('Create SEA');
+        $('#sea_id').val('');
+        $('#display_id').val('');
+        stepCounter = 1;
+        $('#existingAttachments').html('<small class="text-muted">No attachments</small>');
+        addInstrRow();
 
-          generateIdPreview();
-          $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
-        };
+        generateIdPreview();
+        $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
+      };
 
-        // === HELPER: Generate and display SEA ID preview ===
-        function generateIdPreview() {
-          const fleetSelect = $('#fleet');
-          let fleet = fleetSelect.val() || 'UNKNOWN';
-          fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
-          if (fleet === '') fleet = 'UNKNOWN';
+      // === HELPER: Generate and display SEA ID preview ===
+      function generateIdPreview() {
+        const fleetSelect = $('#fleet');
+        let fleet = fleetSelect.val() || 'UNKNOWN';
+        fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (fleet === '') fleet = 'UNKNOWN';
 
-          const today = new Date();
-          const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
-          const randomPart = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0'); // 100–999
+        const today = new Date();
+        const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
+        const randomPart = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0'); // 100–999
 
-          const previewId = `SEA-${fleet}-${datePart}-${randomPart}`;
-          $('#display_id').val(previewId);
-        }
-        window.showSeaList = function () {
-          hideAll();
-          $('#listView').removeClass('hidden');
-          loadSeaList();
-        };
+        const previewId = `SEA-${fleet}-${datePart}-${randomPart}`;
+        $('#display_id').val(previewId);
+      }
+      window.showSeaList = function () {
+        hideAll();
+        $('#listView').removeClass('hidden');
+        loadSeaList();
+      };
 
-        window.goBack = function () {
-          hideAll();
-          $('#choiceScreen').removeClass('hidden');
-          history.replaceState(null, null, window.location.pathname);
-        };
-
-        function hideAll() {
-          $('#choiceScreen, #createForm, #listView').addClass('hidden');
-        }
-
-        // -------------------------------------------------
-        // LIST & EDIT
-        // -------------------------------------------------
-        function loadSeaList() {
-          const $c = $('#seaContainer');
-          $c.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
-          fetch('./src/list_seas.php')
-            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-            .then(html => {
-              $c.html(html);
-
-              // Reset and populate fleet filter
-              // Inside loadSeaList(), after populating .sea-card
-              $('#fleetFilter').html('<option value="">All Fleets</option>');
-              const fleets = new Set();
-
-              $('.sea-card').each(function () {
-                const $card = $(this);
-                const $fleetStrong = $card.find('strong').filter((_, el) => $(el).text().trim() === 'Fleet:');
-                if ($fleetStrong.length) {
-                  let fleetVal = '';
-                  const next = $fleetStrong[0].nextSibling;
-                  if (next && next.nodeType === Node.TEXT_NODE) {
-                    fleetVal = next.textContent.split('|')[0].trim();
-                  } else {
-                    const match = $fleetStrong.parent().text().match(/Fleet:\s*([^\|]+)/i);
-                    fleetVal = match ? match[1].trim() : '';
-                  }
-                  if (fleetVal) fleets.add(fleetVal);
-                }
-              });
-
-              Array.from(fleets).sort().forEach(f => {
-                $('#fleetFilter').append(`<option value="${f}">${f}</option>`);
-              });
-              // Trigger initial filter (in case of URL params or defaults)
-              filterList();
-            })
-            .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
-        }
-
-        // Combined filtering function
-        function filterList() {
-          const term = $('#searchInput').val().toLowerCase().trim();
-          const selectedFleet = $('#fleetFilter').val(); // Keep original case for comparison
-
-          $('.sea-card').each(function () {
-            const $card = $(this);
-            const $col = $card.closest('.col-md-6');
-
-            // --- Search term match ---
-            const fullText = $card.text().toLowerCase();
-            const matchesSearch = !term || fullText.includes(term);
-
-            // --- Fleet match: Look for <strong>Fleet:</strong> followed by value ---
-            let cardFleet = '';
-            const $fleetStrong = $card.find('strong').filter(function () {
-              return $(this).text().trim() === 'Fleet:';
-            });
-            if ($fleetStrong.length) {
-              // Get the text *after* the <strong>Fleet:</strong>
-              const fleetNode = $fleetStrong[0].nextSibling;
-              if (fleetNode && fleetNode.nodeType === Node.TEXT_NODE) {
-                cardFleet = fleetNode.textContent.split('|')[0].trim();
-              } else {
-                // Fallback: get parent <p> and extract after "Fleet:"
-                const pText = $fleetStrong.parent().text();
-                const match = pText.match(/Fleet:\s*([^\|]+)/i);
-                cardFleet = match ? match[1].trim() : '';
-              }
-            }
-
-            const matchesFleet = !selectedFleet || cardFleet === selectedFleet;
-
-            // Show/hide based on both filters
-            $col.toggle(matchesSearch && matchesFleet);
-          });
-        }
-
-
-        // Event listeners for filtering
-        $('#searchInput').on('input', filterList);
-        $('#fleetFilter').on('change', filterList);
-
-
-        window.deleteSea = function (id) {
-          if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
-          const f = document.createElement('form');
-          f.method = 'POST'; f.action = './src/delete.php'; f.style.display = 'none';
-          const i = document.createElement('input');
-          i.type = 'hidden'; i.name = 'filename'; i.value = `sea-${id}.json`;
-          f.appendChild(i); document.body.appendChild(f); f.submit();
-        };
-
-        window.editSea = function (id) {
-          hideAll();
-
-          // ---- Form mode -------------------------------------------------
-          $('#sea_action').val('update');
-          $('#formTitle').text('Edit SEA – ' + id);
-          $('#submitBtn').text('Update SEA');
-
-          // ---- Reset everything (while still hidden) --------------------
-          $('#seaForm')[0].reset();
-          $('#partsTable tbody').empty();
-          $('#instrTable tbody').empty();
-          stepCounter = 1;
-          $('#existingAttachments').empty();
-          $('#fleet').val('').trigger('change');
-          $('#device').val(null).trigger('change');
-
-          // ---- SEA ID must survive the reset ----------------------------
-          $('#sea_id').val(id);
-          $('#display_id').val(id);
-
-          resetForm(false);
-          // ---- Load JSON -------------------------------------------------
-          fetch(`data/sea-${id}.json`)
-            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(d => {
-              // <-- NEW – clean before filling
-              console.log('Loaded SEA data →', d);
-
-              // ----- Basic fields -----
-              $('#ea_number').val(d.ea_number || '');
-              $('#revision').val(d.revision || '');
-              $('#requester').val(d.requester || '');
-              $('#description').val(d.description || '');
-              $('#justification').val(d.justification || '');
-
-              // ----- Impact (the field that was previously overwritten) -----
-              const impactVal = d.impact || '';
-              console.log('Setting #impact →', impactVal);
-              $('#impact').val(impactVal);
-
-              $('#priority').val(d.priority || 'Medium');
-              $('#target_date').val(d.target_date || '');
-              $('#status').val(d.status || 'Planning');
-
-              // ----- Parts / Instructions -----
-              (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
-              (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
-
-              // ----- TinyMCE re-init -----
-              setTimeout(() => {
-                tinymce.remove('#instrTable .instr-text');
-                tinymce.init({
-                  selector: '#instrTable .instr-text',
-                  height: 80,
-                  menubar: false,
-                  plugins: 'lists link image table code autoresize',
-                  toolbar: 'undo redo | bold italic underline | bullist numlist | link image | removeformat | code | table',
-                  branding: false,
-                  statusbar: true,
-                  resize: true,
-                  autoresize_bottom_margin: 12,
-                  stateless: true,
-                  setup: ed => {
-                    ed.on('change keyup', () => {
-                      ed.save();
-                      try { autoResizeTextarea(ed.getElement()); } catch (e) { }
-                    });
-                  },
-                  // Enable local file browser
-                  file_picker_types: 'image',
-
-                  file_picker_callback: function (callback, value, meta) {
-                    let input = document.createElement('input');
-                    input.setAttribute('type', 'file');
-                    input.setAttribute('accept', 'image/*');
-
-                    input.onchange = function () {
-                      let file = this.files[0];
-                      let reader = new FileReader();
-
-                      reader.onload = function () {
-                        callback(reader.result, { alt: file.name });
-                      };
-
-                      reader.readAsDataURL(file);
-                    };
-
-                    input.click();
-                  }
-                });
-                $('#instrTable .instr-text').each(function () { autoResizeTextarea(this); });
-              }, 150);
-
-              // ----- Attachments -----
-              loadExistingAttachments(d.attachments || []);
-
-              // ----- Fleet / Device -----
-              $('#fleet').val(d.fleet || '').trigger('change');
-              const devices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
-              $('#device').val(devices).trigger('change');
-
-              // ----- Finally show the form -----
-              $('#createForm').removeClass('hidden');
-            })
-            .catch(err => {
-              console.error(err);
-              showAlert('danger', 'Failed to load SEA: ' + err.message);
-              $('#choiceScreen').removeClass('hidden');
-            });
-        };
-        // -------------------------------------------------
-        // SEARCH
-        // -------------------------------------------------
-        // $('#searchInput').on('input', function () {
-        //   const term = this.value.toLowerCase();
-        //   $('.sea-card').each(function () {
-        //     const txt = this.textContent.toLowerCase();
-        //     $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
-        //   });
-        // });
-
-        // -------------------------------------------------
-        // STARTUP
-        // -------------------------------------------------
+      window.goBack = function () {
         hideAll();
         $('#choiceScreen').removeClass('hidden');
+        history.replaceState(null, null, window.location.pathname);
+      };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const editId = urlParams.get('id');
-        if (editId) editSea(editId);
+      function hideAll() {
+        $('#choiceScreen, #createForm, #listView').addClass('hidden');
+      }
 
-        // Click-to-expand for SEA descriptions
-        document.addEventListener('click', function (e) {
-          if (e.target.classList.contains('expand-desc')) {
-            e.preventDefault();
-            const shortSpan = e.target.previousElementSibling;
-            const fullText = shortSpan.dataset.full;
-            const shortText = shortSpan.dataset.short;
+      // -------------------------------------------------
+      // LIST & EDIT
+      // -------------------------------------------------
+      function loadSeaList() {
+        const $c = $('#seaContainer');
+        $c.html('<div class="text-center py-5"><div class="spinner-border"></div> Loading...</div>');
+        fetch('./src/list_seas.php')
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+          .then(html => {
+            $c.html(html);
 
-            if (shortSpan.dataset.expanded) {
-              // Collapse
-              shortSpan.innerHTML = shortText;
-              shortSpan.style = 'max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;';
-              e.target.innerHTML = '[show more]';
-              delete shortSpan.dataset.expanded;
+            // Reset and populate fleet filter
+            // Inside loadSeaList(), after populating .sea-card
+            $('#fleetFilter').html('<option value="">All Fleets</option>');
+            const fleets = new Set();
+
+            $('.sea-card').each(function () {
+              const $card = $(this);
+              const $fleetStrong = $card.find('strong').filter((_, el) => $(el).text().trim() === 'Fleet:');
+              if ($fleetStrong.length) {
+                let fleetVal = '';
+                const next = $fleetStrong[0].nextSibling;
+                if (next && next.nodeType === Node.TEXT_NODE) {
+                  fleetVal = next.textContent.split('|')[0].trim();
+                } else {
+                  const match = $fleetStrong.parent().text().match(/Fleet:\s*([^\|]+)/i);
+                  fleetVal = match ? match[1].trim() : '';
+                }
+                if (fleetVal) fleets.add(fleetVal);
+              }
+            });
+
+            Array.from(fleets).sort().forEach(f => {
+              $('#fleetFilter').append(`<option value="${f}">${f}</option>`);
+            });
+            // Trigger initial filter (in case of URL params or defaults)
+            filterList();
+          })
+          .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
+      }
+
+      // Combined filtering function
+      function filterList() {
+        const term = $('#searchInput').val().toLowerCase().trim();
+        const selectedFleet = $('#fleetFilter').val(); // Keep original case for comparison
+
+        $('.sea-card').each(function () {
+          const $card = $(this);
+          const $col = $card.closest('.col-md-6');
+
+          // --- Search term match ---
+          const fullText = $card.text().toLowerCase();
+          const matchesSearch = !term || fullText.includes(term);
+
+          // --- Fleet match: Look for <strong>Fleet:</strong> followed by value ---
+          let cardFleet = '';
+          const $fleetStrong = $card.find('strong').filter(function () {
+            return $(this).text().trim() === 'Fleet:';
+          });
+          if ($fleetStrong.length) {
+            // Get the text *after* the <strong>Fleet:</strong>
+            const fleetNode = $fleetStrong[0].nextSibling;
+            if (fleetNode && fleetNode.nodeType === Node.TEXT_NODE) {
+              cardFleet = fleetNode.textContent.split('|')[0].trim();
             } else {
-              // Expand
-              shortSpan.innerHTML = fullText;
-              shortSpan.style = '';
-              e.target.innerHTML = '[show less]';
-              shortSpan.dataset.expanded = '1';
+              // Fallback: get parent <p> and extract after "Fleet:"
+              const pText = $fleetStrong.parent().text();
+              const match = pText.match(/Fleet:\s*([^\|]+)/i);
+              cardFleet = match ? match[1].trim() : '';
             }
           }
+
+          const matchesFleet = !selectedFleet || cardFleet === selectedFleet;
+
+          // Show/hide based on both filters
+          $col.toggle(matchesSearch && matchesFleet);
         });
+      }
+
+
+      // Event listeners for filtering
+      $('#searchInput').on('input', filterList);
+      $('#fleetFilter').on('change', filterList);
+
+
+      window.deleteSea = function (id) {
+        if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
+        const f = document.createElement('form');
+        f.method = 'POST'; f.action = './src/delete.php'; f.style.display = 'none';
+        const i = document.createElement('input');
+        i.type = 'hidden'; i.name = 'filename'; i.value = `sea-${id}.json`;
+        f.appendChild(i); document.body.appendChild(f); f.submit();
+      };
+
+      window.editSea = function (id) {
+        hideAll();
+
+        // ---- Form mode -------------------------------------------------
+        $('#sea_action').val('update');
+        $('#formTitle').text('Edit SEA – ' + id);
+        $('#submitBtn').text('Update SEA');
+
+        // ---- Reset everything (while still hidden) --------------------
+        $('#seaForm')[0].reset();
+        $('#partsTable tbody').empty();
+        $('#instrTable tbody').empty();
+        stepCounter = 1;
+        $('#existingAttachments').empty();
+        $('#fleet').val('').trigger('change');
+        $('#device').val(null).trigger('change');
+
+        // ---- SEA ID must survive the reset ----------------------------
+        $('#sea_id').val(id);
+        $('#display_id').val(id);
+
+        resetForm(false);
+        // ---- Load JSON -------------------------------------------------
+        fetch(`data/sea-${id}.json`)
+          .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+          .then(d => {
+            // <-- NEW – clean before filling
+            console.log('Loaded SEA data →', d);
+
+            // ----- Basic fields -----
+            $('#ea_number').val(d.ea_number || '');
+            $('#revision').val(d.revision || '');
+            $('#requester').val(d.requester || '');
+            $('#description').val(d.description || '');
+            $('#justification').val(d.justification || '');
+
+            // ----- Impact (the field that was previously overwritten) -----
+            const impactVal = d.impact || '';
+            console.log('Setting #impact →', impactVal);
+            $('#impact').val(impactVal);
+
+            $('#priority').val(d.priority || 'Medium');
+            $('#target_date').val(d.target_date || '');
+            $('#status').val(d.status || 'Planning');
+
+            // ----- Parts / Instructions -----
+            (JSON.parse(d.parts_json || '[]') || []).forEach(addPartRow);
+            (JSON.parse(d.instructions_json || '[]') || []).forEach(addInstrRow);
+
+            // ----- TinyMCE re-init -----
+            setTimeout(() => {
+              tinymce.remove('#instrTable .instr-text');
+              tinymce.init({
+                selector: '#instrTable .instr-text',
+                height: 80,
+                menubar: false,
+                plugins: 'lists link image table code autoresize',
+                toolbar: 'undo redo | bold italic underline | bullist numlist | link image | removeformat | code | table',
+                branding: false,
+                statusbar: true,
+                resize: true,
+                autoresize_bottom_margin: 12,
+                stateless: true,
+                setup: ed => {
+                  ed.on('change keyup', () => {
+                    ed.save();
+                    try { autoResizeTextarea(ed.getElement()); } catch (e) { }
+                  });
+                },
+                // Enable local file browser
+                file_picker_types: 'image',
+
+                file_picker_callback: function (callback, value, meta) {
+                  let input = document.createElement('input');
+                  input.setAttribute('type', 'file');
+                  input.setAttribute('accept', 'image/*');
+
+                  input.onchange = function () {
+                    let file = this.files[0];
+                    let reader = new FileReader();
+
+                    reader.onload = function () {
+                      callback(reader.result, { alt: file.name });
+                    };
+
+                    reader.readAsDataURL(file);
+                  };
+
+                  input.click();
+                }
+              });
+              $('#instrTable .instr-text').each(function () { autoResizeTextarea(this); });
+            }, 150);
+
+            // ----- Attachments -----
+            $('#existingAttachments').empty();
+            loadExistingAttachments(d.attachments || []);
+
+            // ----- Fleet / Device -----
+            $('#fleet').val(d.fleet || '').trigger('change');
+            const devices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
+            $('#device').val(devices).trigger('change');
+
+            // ----- Finally show the form -----
+            $('#createForm').removeClass('hidden');
+          })
+          .catch(err => {
+            console.error(err);
+            showAlert('danger', 'Failed to load SEA: ' + err.message);
+            $('#choiceScreen').removeClass('hidden');
+          });
+      };
+      // -------------------------------------------------
+      // SEARCH
+      // -------------------------------------------------
+      // $('#searchInput').on('input', function () {
+      //   const term = this.value.toLowerCase();
+      //   $('.sea-card').each(function () {
+      //     const txt = this.textContent.toLowerCase();
+      //     $(this).closest('.col-md-6')[txt.includes(term) ? 'show' : 'hide']();
+      //   });
+      // });
+
+      // -------------------------------------------------
+      // STARTUP
+      // -------------------------------------------------
+      hideAll();
+      $('#choiceScreen').removeClass('hidden');
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get('id');
+      if (editId) editSea(editId);
+
+      // Click-to-expand for SEA descriptions
+      document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('expand-desc')) {
+          e.preventDefault();
+          const shortSpan = e.target.previousElementSibling;
+          const fullText = shortSpan.dataset.full;
+          const shortText = shortSpan.dataset.short;
+
+          if (shortSpan.dataset.expanded) {
+            // Collapse
+            shortSpan.innerHTML = shortText;
+            shortSpan.style = 'max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;';
+            e.target.innerHTML = '[show more]';
+            delete shortSpan.dataset.expanded;
+          } else {
+            // Expand
+            shortSpan.innerHTML = fullText;
+            shortSpan.style = '';
+            e.target.innerHTML = '[show less]';
+            shortSpan.dataset.expanded = '1';
+          }
+        }
+      });
 
       // -------------------------------------------------
       // COLLECT PARTS DATA
