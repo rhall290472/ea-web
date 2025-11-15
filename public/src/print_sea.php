@@ -115,19 +115,14 @@ $html = '<style>
 </style>
 
 <h1>Simulator Engineering Authorization</h1>
-<p>SEA ID: ' . h($sea['id']) . ' | Version: ' . h($sea['version'] ?? '1') . '</p>
-<p>Requester: ' . h($sea['requester']) . '</p>
+<p>SEA ID: ' . h($sea['id']) .'| EA Number: ' . h($sea['ea_number']) . ' | EA Revision: ' . h($sea['revision']) .'</p>
+<p>Priority: ' . h($sea['priority']) .' | Target Date: ' . h($sea['target_date']) .' | Status: ' . h($sea['stauts']) .'</p>
 <p>Fleet: ' . h($sea['fleet']) . ' | Device: ' . h(implode(', ', (array)$sea['device'])) . '</p>
-<p>EA Number: ' . h($sea['ea_number']) . ' | Priority: ' . h($sea['priority']) . '</p>
-<p>Target Date: ' . h($sea['target_date']) . ' | Revision: ' . h($sea['revision']) . '</p>
-<p>Timestamp: ' . h($sea['timestamp']) . '</p>
-
+<p>Author: ' . h($sea['requester']) . '</p>
 <h2>Description</h2>
 <p>' . nl2br_h($sea['description']) . '</p>
-
 <h2>Justification</h2>
 <p>' . nl2br_h($sea['justification']) . '</p>
-
 <h2>Impact</h2>
 <p>' . nl2br_h($sea['impact']) . '</p>
 

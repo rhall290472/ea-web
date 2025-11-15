@@ -234,7 +234,7 @@ function loadExistingAttachments(attachments) {
 
           <!-- Fleet -->
           <div class="col-md-6">
-            <label for="fleet" class="form-label">Fleet</label>
+            <label for="fleet" class="form-label">Fleet<span class="text-danger">*</span></label>
             <select class="form-select select2" id="fleet" name="fleet" required>
               <option value="">-- Select Fleet --</option>
               <option value="737">737</option>
@@ -253,13 +253,13 @@ function loadExistingAttachments(attachments) {
 
           <!-- Requester -->
           <div class="col-md-12">
-            <label for="requester" class="form-label">Author</label>
+            <label for="requester" class="form-label">Author<span class="text-danger">*</span></label>
             <input type="text" class="form-control" id="requester" name="requester" required>
           </div>
 
           <!-- Description -->
           <div class="col-md-12">
-            <label for="description" class="form-label">Description</label>
+            <label for="description" class="form-label">Description<span class="text-danger">*</span></label>
             <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
           </div>
 
