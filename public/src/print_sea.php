@@ -188,9 +188,8 @@ $mpdf = new Mpdf([
 
 // Header & Footer
 $mpdf->SetHTMLHeader('
-<div style="text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
+<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
     <img src="' . $projectRoot . '/public/images/United-Airlines-Logo.png" width="100" alt="Logo">
-    <div style="font-size: 14pt; font-weight: bold; margin-top: 8px;">Simulator Engineering Authorization</div>
 </div>');
 
 $mpdf->SetHTMLFooter('
@@ -202,14 +201,22 @@ $mpdf->SetHTMLFooter('
 $mpdf->WriteHTML($html);
 
 // ------------------------------------------------------------------
-// 9. EMBED ATTACHMENTS — mPDF 7.x COMPATIBLE
+// 9. EMBED ATTACHMENTS — NO HEADER OR LOGO ON THESE PAGES
 // ------------------------------------------------------------------
 $attachments = $sea['attachments'] ?? [];
 
 if (!empty($attachments)) {
+    // Optional: Keep header on "Attached Documents" index page
     $mpdf->AddPage();
     $mpdf->WriteHTML('<h2 style="text-align:center; color:#0d6efd; margin:30px 0 15px;">Attached Documents</h2><hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">');
 }
+
+// === TURN OFF HEADER FOR ALL ATTACHMENT PAGES ===
+$mpdf->SetHTMLHeader('');  // Clear header
+$mpdf->defaultheaderfontstyle = '';
+$mpdf->defaultheaderfontsize = 0;
+$mpdf->defaultfooterfontstyle = '';
+$mpdf->defaultfooterfontsize = 0;
 
 foreach ($attachments as $url) {
     $relPath = preg_replace('#^/ea-web/public/#', '', $url);
@@ -226,20 +233,22 @@ foreach ($attachments as $url) {
 
     $filename = basename($relPath);
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    $mpdf->AddPage();
-    $mpdf->WriteHTML('<h3 style="text-align:center; margin:25px 0 15px; color:#333;">Attachment: ' . h($filename) . '</h3>');
+
+    // Add page with NO header space and NO header content
+    $mpdf->AddPage('', '', '', '', '', 15, 15, 20, 20, 0, 10); // margin_top reduced to 20
+    $mpdf->WriteHTML('<h3 style="text-align:center; margin:15px 0 10px; color:#333;">Attachment: ' . h($filename) . '</h3>');
 
     if ($ext === 'pdf') {
         try {
-            $pageCount = $mpdf->setSourceFile($filePath);  // mPDF 7.x
+            $pageCount = $mpdf->setSourceFile($filePath);
             error_log("PDF has $pageCount pages");
             for ($i = 1; $i <= $pageCount; $i++) {
                 if ($i > 1) {
-                    $mpdf->AddPage();
-                    $mpdf->WriteHTML('<h3 style="text-align:center; margin:25px 0 15px; color:#666; font-size:11pt;">' . h($filename) . ' – Page ' . $i . '</h3>');
+                    $mpdf->AddPage('', '', '', '', '', 15, 15, 20, 20, 0, 10);
+                    $mpdf->WriteHTML('<h3 style="text-align:center; margin:15px 0 10px; color:#666; font-size:11pt;">' . h($filename) . ' – Page ' . $i . '</h3>');
                 }
-                $tplId = $mpdf->importPage($i);  // lowercase 'i'
-                $mpdf->useTemplate($tplId);     // lowercase 'u'
+                $tplId = $mpdf->importPage($i);
+                $mpdf->useTemplate($tplId);
             }
         } catch (Exception $e) {
             error_log("PDF Embed Error: " . $e->getMessage());
@@ -247,7 +256,7 @@ foreach ($attachments as $url) {
         }
     } elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
         $mpdf->WriteHTML('
-        <div style="text-align:center; margin:20px 0;">
+        <div style="text-align:center; margin:15px 0;">
             <img src="file:///' . str_replace('\\', '/', $filePath) . '" 
                  style="max-width:100%; max-height:720px; height:auto; border:1px solid #ddd;" />
         </div>');
@@ -255,6 +264,11 @@ foreach ($attachments as $url) {
         $mpdf->WriteHTML('<p style="text-align:center; color:#666; font-style:italic;">[File not embedded: ' . h($filename) . ']</p>');
     }
 }
+
+// === OPTIONAL: Restore header if you want it back after attachments ===
+// (Not needed since this is the end of the document)
+// $mpdf->SetHTMLHeader($originalHeaderHTML);
+
 
 
 // ------------------------------------------------------------------
