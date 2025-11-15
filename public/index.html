@@ -682,8 +682,10 @@ function loadExistingAttachments(attachments) {
           if (xhr.responseJSON?.message) {
             msg = xhr.responseJSON.message;
           } else if (xhr.status === 406) {
+            error_log( msg );
             msg = 'Request blocked by server (406). Check file size or mod_security rules.';
           } else if (xhr.status === 500) {
+            error_log( msg );
             msg = 'Server error. Check logs.';
           }
           showAlert('danger', msg);

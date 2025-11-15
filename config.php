@@ -8,17 +8,20 @@
 $logDir = __DIR__ . '/../../storage/logs';
 $logFile = $logDir . '/mpdf.log';
 
-if (!is_dir($logDir)) {
-    if (!mkdir($logDir, 0755, true)) {
-        // Fallback: use system temp dir
-        $logFile = sys_get_temp_dir() . '/mpdf_seat.log';
-    }
-}
+// ------------------------------------------------------------------
+// ENSURE LOG DIRECTORY EXISTS
+// ------------------------------------------------------------------
+$logDir = __DIR__ . '/../../storage/logs';
+$logFile = $logDir . '/mpdf.log';
 
-ini_set('display_errors', 0);
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true); // Creates storage/logs if missing
+}
+ini_set('error_log', $logFile);
 error_reporting(E_ALL);
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/storage/logs/mpdf.log');
+error_log("PDF generation started for SEA ID: " . ($_GET['id'] ?? 'unknown'));
+
+
 
 // -----------------------------
 // 1. Timezone
