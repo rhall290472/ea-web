@@ -6,6 +6,18 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Mpdf\Mpdf;
 
 // ------------------------------------------------------------------
+// ENSURE LOG DIRECTORY EXISTS
+// ------------------------------------------------------------------
+$logDir = __DIR__ . '/../../storage/logs';
+$logFile = $logDir . '/mpdf.log';
+
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true); // Creates storage/logs if missing
+}
+ini_set('error_log', $logFile);
+error_log("PDF generation started for SEA ID: " . ($_GET['id'] ?? 'unknown'));
+
+// ------------------------------------------------------------------
 // 1. GET THE SEA
 // ------------------------------------------------------------------
 $id = $_GET['id'] ?? '';
@@ -21,6 +33,9 @@ if (!is_array($sea)) {
   die('Corrupt JSON');
 }
 
+// ADD THIS HERE — BEFORE ANY DEBUG
+$projectRoot = realpath(__DIR__ . '/../../');
+$uploadBase = $projectRoot . '/public/data/uploads/SEA';  // CORRECT PATH
 // ------------------------------------------------------------------
 // 2. HELPERS
 // ------------------------------------------------------------------
@@ -75,7 +90,7 @@ $instrHtml = '<table style="width:100%;border-collapse:collapse;margin:15px 0;fo
     <tbody>';
 foreach ($instr as $i => $inst) {
   $instrHtml .= "<tr>
-        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\"> " . ($i+1) . "</td>
+        <td style=\"border:1px solid #ddd;padding:8px;text-align:center;\"> " . ($i + 1) . "</td>
         <td style=\"border:1px solid #ddd;padding:8px;\"> " . ($inst['instruction'] ?? '') . "</td>
         <td style=\"border:1px solid #ddd;padding:8px;\"> " . nl2br_h($inst['notes'] ?? '') . "</td>
     </tr>";
@@ -115,8 +130,8 @@ $html = '<style>
 </style>
 
 <h1 style="text-align: center; margin: 20px 0; padding-bottom: 10px; border-bottom: 1px solid #ddd;">Simulator Engineering Authorization</h1>
-<p>SEA ID: ' . h($sea['id']) .'| EA Number: ' . h($sea['ea_number']) . ' | EA Revision: ' . h($sea['revision']) .'</p>
-<p>Priority: ' . h($sea['priority']) .' | Target Date: ' . h($sea['target_date']) .' | Status: ' . h($sea['stauts']) .'</p>
+<p>SEA ID: ' . h($sea['id']) . '| EA Number: ' . h($sea['ea_number']) . ' | EA Revision: ' . h($sea['revision']) . '</p>
+<p>Priority: ' . h($sea['priority']) . ' | Target Date: ' . h($sea['target_date']) . ' | Status: ' . h($sea['status']) . '</p>
 <p>Fleet: ' . h($sea['fleet']) . ' | Device: ' . h(implode(', ', (array)$sea['device'])) . '</p>
 <p>Author: ' . h($sea['requester']) . '</p>
 <h2>Description</h2>
@@ -136,29 +151,29 @@ $html = '<style>
 ' . $attachHtml . '';
 
 // ------------------------------------------------------------------
-// 7. FIX IMAGES FOR PDF (CRITICAL)
+// 7. FIX IMAGES + EMBED ATTACHMENTS (NEW)
 // ------------------------------------------------------------------
 $projectRoot = realpath(__DIR__ . '/../../');
+$uploadDir = $projectRoot . '/public/data/uploads/SEA/' . $sea['id'];
 
 // Unescape JSON slashes
 $html = str_replace(['\\/', '\/'], '/', $html);
 
-// Convert relative to absolute file paths
+// Fix local image paths in rich text (TinyMCE)
 $html = preg_replace_callback(
-    '#src=["\'](data/uploads/SEA/[^"\']+)["\']#i',
-    function($m) use ($projectRoot) {
-        $relative = $m[1];
-        $fullPath = $projectRoot . '/public/' . $relative;  // Since data is in public/data
-        if (file_exists($fullPath)) {
-            return 'src="file:///' . str_replace('\\', '/', $fullPath) . '"';
-        }
-        return $m[0];
-    },
-    $html
+  '#src=["\'](data/uploads/SEA/[^"\']+)["\']#i',
+  function ($m) use ($projectRoot) {
+    $relative = $m[1];
+    $fullPath = $projectRoot . '/public/' . $relative;
+    return file_exists($fullPath)
+      ? 'src="file:///' . str_replace('\\', '/', $fullPath) . '"'
+      : $m[0];
+  },
+  $html
 );
 
 // ------------------------------------------------------------------
-// 8. mPDF SETUP
+// 8. mPDF SETUP + EMBED ATTACHMENTS
 // ------------------------------------------------------------------
 $mpdf = new Mpdf([
   'mode' => 'utf-8',
@@ -171,17 +186,76 @@ $mpdf = new Mpdf([
   'margin_footer' => 10,
 ]);
 
+// Header & Footer
 $mpdf->SetHTMLHeader('
-<div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 5px;">
-    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">
+<div style="text-align: center; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 10px;">
+    <img src="' . $projectRoot . '/public/images/United-Airlines-Logo.png" width="100" alt="Logo">
+    <div style="font-size: 14pt; font-weight: bold; margin-top: 8px;">Simulator Engineering Authorization</div>
 </div>');
 
 $mpdf->SetHTMLFooter('
-<div style="text-align: right; font-size: 10px; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
+<div style="text-align: right; font-size: 9px; color: #666; border-top: 1px solid #ddd; padding-top: 5px;">
     Page {PAGENO} of {nbpg} | Version: ' . h($sea['version'] ?? '1') . '
 </div>');
 
+// Write main SEA content
 $mpdf->WriteHTML($html);
+
+// ------------------------------------------------------------------
+// 9. EMBED ATTACHMENTS — mPDF 7.x COMPATIBLE
+// ------------------------------------------------------------------
+$attachments = $sea['attachments'] ?? [];
+
+if (!empty($attachments)) {
+    $mpdf->AddPage();
+    $mpdf->WriteHTML('<h2 style="text-align:center; color:#0d6efd; margin:30px 0 15px;">Attached Documents</h2><hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">');
+}
+
+foreach ($attachments as $url) {
+    $relPath = preg_replace('#^/ea-web/public/#', '', $url);
+    $filePath = realpath($projectRoot . '/public/' . $relPath);
+
+    error_log("Attachment URL: $url");
+    error_log("Resolved Path: " . ($filePath ?: 'NOT FOUND'));
+
+    if (!$filePath || !file_exists($filePath)) {
+        $mpdf->AddPage();
+        $mpdf->WriteHTML('<p style="color:red; text-align:center; font-weight:bold;">[Missing: ' . h(basename($relPath)) . ']</p>');
+        continue;
+    }
+
+    $filename = basename($relPath);
+    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    $mpdf->AddPage();
+    $mpdf->WriteHTML('<h3 style="text-align:center; margin:25px 0 15px; color:#333;">Attachment: ' . h($filename) . '</h3>');
+
+    if ($ext === 'pdf') {
+        try {
+            $pageCount = $mpdf->setSourceFile($filePath);  // mPDF 7.x
+            error_log("PDF has $pageCount pages");
+            for ($i = 1; $i <= $pageCount; $i++) {
+                if ($i > 1) {
+                    $mpdf->AddPage();
+                    $mpdf->WriteHTML('<h3 style="text-align:center; margin:25px 0 15px; color:#666; font-size:11pt;">' . h($filename) . ' – Page ' . $i . '</h3>');
+                }
+                $tplId = $mpdf->importPage($i);  // lowercase 'i'
+                $mpdf->useTemplate($tplId);     // lowercase 'u'
+            }
+        } catch (Exception $e) {
+            error_log("PDF Embed Error: " . $e->getMessage());
+            $mpdf->WriteHTML('<p style="color:red; text-align:center;">[Failed to embed PDF]</p>');
+        }
+    } elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
+        $mpdf->WriteHTML('
+        <div style="text-align:center; margin:20px 0;">
+            <img src="file:///' . str_replace('\\', '/', $filePath) . '" 
+                 style="max-width:100%; max-height:720px; height:auto; border:1px solid #ddd;" />
+        </div>');
+    } else {
+        $mpdf->WriteHTML('<p style="text-align:center; color:#666; font-style:italic;">[File not embedded: ' . h($filename) . ']</p>');
+    }
+}
+
 
 // ------------------------------------------------------------------
 // OUTPUT

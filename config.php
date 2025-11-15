@@ -2,6 +2,24 @@
 // ea-web/config.php
 // Central configuration – easy to tweak without editing core files
 
+// ------------------------------------------------------------------
+// ENSURE LOG DIRECTORY EXISTS
+// ------------------------------------------------------------------
+$logDir = __DIR__ . '/../../storage/logs';
+$logFile = $logDir . '/mpdf.log';
+
+if (!is_dir($logDir)) {
+    if (!mkdir($logDir, 0755, true)) {
+        // Fallback: use system temp dir
+        $logFile = sys_get_temp_dir() . '/mpdf_seat.log';
+    }
+}
+
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/storage/logs/mpdf.log');
+
 // -----------------------------
 // 1. Timezone
 // -----------------------------

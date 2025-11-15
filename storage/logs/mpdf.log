@@ -1,0 +1,53 @@
+[14-Nov-2025 23:44:50 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[14-Nov-2025 23:44:50 America/New_York] === SEA DEBUG ===
+[14-Nov-2025 23:44:50 America/New_York] SEA ID: 737-20251114-315
+[14-Nov-2025 23:44:50 America/New_York] Attachments: Array
+(
+    [0] => /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+)
+
+[14-Nov-2025 23:44:50 America/New_York] PHP Warning:  Undefined variable $uploadBase in C:\xampp\htdocs\ea-web\public\src\print_sea.php on line 35
+[14-Nov-2025 23:44:50 America/New_York] Expected folder: /737-20251114-315
+[14-Nov-2025 23:44:50 America/New_York] DEBUG: projectRoot = C:\xampp\htdocs\ea-web
+[14-Nov-2025 23:44:50 America/New_York] DEBUG: uploadBase = C:\xampp\htdocs\ea-web/public/uploads/SEA
+[14-Nov-2025 23:44:50 America/New_York] Looking for: C:\xampp\htdocs\ea-web/public/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:44:50 America/New_York] Resolved to: NOT FOUND
+[14-Nov-2025 23:50:11 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[14-Nov-2025 23:50:11 America/New_York] === SEA DEBUG ===
+[14-Nov-2025 23:50:11 America/New_York] SEA ID: 737-20251114-315
+[14-Nov-2025 23:50:11 America/New_York] Attachments: Array
+(
+    [0] => /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+)
+
+[14-Nov-2025 23:50:11 America/New_York] PHP Warning:  Undefined variable $uploadBase in C:\xampp\htdocs\ea-web\public\src\print_sea.php on line 35
+[14-Nov-2025 23:50:11 America/New_York] Expected folder: /737-20251114-315
+[14-Nov-2025 23:50:12 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:50:12 America/New_York] Resolved Path: NOT FOUND
+[14-Nov-2025 23:50:51 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[14-Nov-2025 23:50:51 America/New_York] === SEA DEBUG ===
+[14-Nov-2025 23:50:51 America/New_York] SEA ID: 737-20251114-315
+[14-Nov-2025 23:50:51 America/New_York] Attachments: Array
+(
+    [0] => /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+)
+
+[14-Nov-2025 23:50:51 America/New_York] PHP Warning:  Undefined variable $uploadBase in C:\xampp\htdocs\ea-web\public\src\print_sea.php on line 35
+[14-Nov-2025 23:50:51 America/New_York] Expected folder: /737-20251114-315
+[14-Nov-2025 23:50:52 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:50:52 America/New_York] Resolved Path: NOT FOUND
+[14-Nov-2025 23:55:25 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[14-Nov-2025 23:55:25 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:55:25 America/New_York] Resolved Path: NOT FOUND
+[14-Nov-2025 23:59:51 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[14-Nov-2025 23:59:52 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:59:52 America/New_York] Resolved Path: C:\xampp\htdocs\ea-web\public\data\uploads\SEA\737-20251114-315\2022_Sr_Zone_Legal.pdf
+[14-Nov-2025 23:59:52 America/New_York] PDF Embed Error: Call to undefined method Mpdf\Mpdf::SetImportUse()
+[15-Nov-2025 00:01:43 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[15-Nov-2025 00:01:43 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[15-Nov-2025 00:01:43 America/New_York] Resolved Path: C:\xampp\htdocs\ea-web\public\data\uploads\SEA\737-20251114-315\2022_Sr_Zone_Legal.pdf
+[15-Nov-2025 00:01:43 America/New_York] PDF Embed Error: Call to undefined method Mpdf\Mpdf::setImportUse()
+[15-Nov-2025 00:03:57 America/New_York] PDF generation started for SEA ID: 737-20251114-315
+[15-Nov-2025 00:03:57 America/New_York] Attachment URL: /ea-web/public/data/uploads/SEA/737-20251114-315/2022_Sr_Zone_Legal.pdf
+[15-Nov-2025 00:03:57 America/New_York] Resolved Path: C:\xampp\htdocs\ea-web\public\data\uploads\SEA\737-20251114-315\2022_Sr_Zone_Legal.pdf
+[15-Nov-2025 00:03:57 America/New_York] PDF has 4 pages
