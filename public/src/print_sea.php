@@ -12,7 +12,7 @@ $logDir = __DIR__ . '/../../storage/logs';
 $logFile = $logDir . '/mpdf.log';
 
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true); // Creates storage/logs if missing
+  mkdir($logDir, 0755, true); // Creates storage/logs if missing
 }
 ini_set('error_log', $logFile);
 error_log("PDF generation started for SEA ID: " . ($_GET['id'] ?? 'unknown'));
@@ -177,7 +177,7 @@ $html = preg_replace_callback(
 // ------------------------------------------------------------------
 $mpdf = new Mpdf([
   'mode' => 'utf-8',
-  'format' => 'A4',
+  'format' => 'Letter',
   'margin_left' => 15,
   'margin_right' => 15,
   'margin_top' => 30,
@@ -206,9 +206,9 @@ $mpdf->WriteHTML($html);
 $attachments = $sea['attachments'] ?? [];
 
 if (!empty($attachments)) {
-    // Optional: Keep header on "Attached Documents" index page
-    $mpdf->AddPage();
-    $mpdf->WriteHTML('<h2 style="text-align:center; color:#0d6efd; margin:30px 0 15px;">Attached Documents</h2><hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">');
+  // Optional: Keep header on "Attached Documents" index page
+  $mpdf->AddPage();
+  $mpdf->WriteHTML('<h2 style="text-align:center; color:#0d6efd; margin:30px 0 15px;">Attached Documents</h2><hr style="border:0; border-top:1px solid #ddd; margin:15px 0;">');
 }
 
 // === TURN OFF HEADER FOR ALL ATTACHMENT PAGES ===
@@ -219,50 +219,99 @@ $mpdf->defaultfooterfontstyle = '';
 $mpdf->defaultfooterfontsize = 0;
 
 foreach ($attachments as $url) {
-    $relPath = preg_replace('#^/ea-web/public/#', '', $url);
-    $filePath = realpath($projectRoot . '/public/' . $relPath);
+  $relPath = preg_replace('#^/ea-web/public/#', '', $url);
+  $filePath = realpath($projectRoot . '/public/' . $relPath);
 
-    error_log("Attachment URL: $url");
-    error_log("Resolved Path: " . ($filePath ?: 'NOT FOUND'));
+  error_log("Attachment URL: $url");
+  error_log("Resolved Path: " . ($filePath ?: 'NOT FOUND'));
 
-    if (!$filePath || !file_exists($filePath)) {
-        $mpdf->AddPage();
-        $mpdf->WriteHTML('<p style="color:red; text-align:center; font-weight:bold;">[Missing: ' . h(basename($relPath)) . ']</p>');
-        continue;
-    }
+  if (!$filePath || !file_exists($filePath)) {
+    $mpdf->AddPage();
+    $mpdf->WriteHTML('<p style="color:red; text-align:center; font-weight:bold;">[Missing: ' . h(basename($relPath)) . ']</p>');
+    continue;
+  }
 
-    $filename = basename($relPath);
-    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+  $filename = basename($relPath);
+  $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
-    // Add page with NO header space and NO header content
-    $mpdf->AddPage('', '', '', '', '', 15, 15, 20, 20, 0, 10); // margin_top reduced to 20
-    $mpdf->WriteHTML('<h3 style="text-align:center; margin:15px 0 10px; color:#333;">Attachment: ' . h($filename) . '</h3>');
+  // Add page with NO header space and NO header content
+  $mpdf->AddPage('', '', '', '', '', 15, 15, 20, 20, 0, 10); // margin_top reduced to 20
+  $mpdf->WriteHTML('<h3 style="text-align:center; margin:15px 0 10px; color:#333;">Attachment: ' . h($filename) . '</h3>');
 
-    if ($ext === 'pdf') {
-        try {
-            $pageCount = $mpdf->setSourceFile($filePath);
-            error_log("PDF has $pageCount pages");
-            for ($i = 1; $i <= $pageCount; $i++) {
-                if ($i > 1) {
-                    $mpdf->AddPage('', '', '', '', '', 15, 15, 20, 20, 0, 10);
-                    $mpdf->WriteHTML('<h3 style="text-align:center; margin:15px 0 10px; color:#666; font-size:11pt;">' . h($filename) . ' – Page ' . $i . '</h3>');
-                }
-                $tplId = $mpdf->importPage($i);
-                $mpdf->useTemplate($tplId);
-            }
-        } catch (Exception $e) {
-            error_log("PDF Embed Error: " . $e->getMessage());
-            $mpdf->WriteHTML('<p style="color:red; text-align:center;">[Failed to embed PDF]</p>');
+  if ($ext === 'pdf') {
+    try {
+      // ------------------------------------------------------------------
+      // 1. Open the PDF once – we only need the page count
+      // ------------------------------------------------------------------
+      $pageCount = $mpdf->setSourceFile($filePath);
+      error_log("PDF '$filename' opened – $pageCount page(s)");
+
+      // ------------------------------------------------------------------
+      // 2. Loop through every page
+      // ------------------------------------------------------------------
+      for ($i = 1; $i <= $pageCount; $i++) {
+
+        // ---- Create a NEW page with the exact size of this source page ----
+        $tplId = $mpdf->importPage($i);               // import *after* page exists
+        $size  = $mpdf->getTemplateSize($tplId);      // array('width'=>…, 'height'=>…)
+
+        $w = $size['width'];
+        $h = $size['height'];
+
+        // ---- Optional: cap gigantic pages (remove if you want 100% size) ----
+        $maxW = 800;   // ~A3 landscape
+        $maxH = 1100;
+        $scale = 1;
+        if ($w > $maxW || $h > $maxH) {
+          $scale = min($maxW / $w, $maxH / $h, 1);
+          $w    *= $scale;
+          $h    *= $scale;
         }
-    } elseif (in_array($ext, ['jpg', 'jpeg', 'png', 'gif'])) {
-        $mpdf->WriteHTML('
-        <div style="text-align:center; margin:15px 0;">
-            <img src="file:///' . str_replace('\\', '/', $filePath) . '" 
-                 style="max-width:100%; max-height:720px; height:auto; border:1px solid #ddd;" />
-        </div>');
-    } else {
-        $mpdf->WriteHTML('<p style="text-align:center; color:#666; font-style:italic;">[File not embedded: ' . h($filename) . ']</p>');
+
+        // ---- Add page with custom size (no header/footer space) ----
+        $mpdf->AddPage(
+          '',                // orientation (empty = custom)
+          [$w, $h],          // custom format in points
+          '',
+          '',
+          '',
+          15,
+          15,            // left / right margin
+          25,
+          25,            // top / bottom margin (room for title)
+          0,
+          10              // header / footer margin
+        );
+
+        // ---- Title for this page ----
+        $mpdf->WriteHTML(
+          '<h3 style="text-align:center;margin:8px 0 6px;color:#333;font-size:11pt;">' .
+            'Attachment: ' . h($filename) . ' – Page ' . $i .
+            '</h3><hr style="border:0;border-top:1px dashed #ccc;margin:6px 0 10px;">'
+        );
+
+        // ---- Embed the page (scaled if needed) ----
+        if ($scale < 1) {
+          $mpdf->useTemplate($tplId, 0, 0, $w, $h);   // scaled
+        } else {
+          $mpdf->useTemplate($tplId);                // full size
+        }
+      }
+    } catch (Exception $e) {
+      // ------------------------------------------------------------------
+      // 3. Graceful fallback – show a red warning but continue
+      // ------------------------------------------------------------------
+      error_log("PDF embed failed for '$filename': " . $e->getMessage());
+      $mpdf->AddPage('', 'Letter', '', '', '', 15, 15, 25, 25, 0, 10);
+      $mpdf->WriteHTML(
+        '<div style="text-align:center; padding:20px; border:2px dashed #ff6b6b; background:#fff5f5; margin:20px;">' .
+          '<h3 style="color:#d32f2f;">PDF Import Failed</h3>' .
+          '<p>Compression not supported. <a href="' . h($url) . '" style="color:#0d6efd; font-weight:bold;">Download ' . h($filename) . '</a></p>' .
+          '<p style="font-size:9pt; color:#666;">(Error: ' . h(substr($e->getMessage(), 0, 100)) . ')</p>' .
+          '</div>'
+      );
     }
+  }
 }
 
 // === OPTIONAL: Restore header if you want it back after attachments ===
