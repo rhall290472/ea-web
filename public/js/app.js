@@ -409,12 +409,15 @@ function handleError(xhr, $btn) {
     if (xhr.responseJSON?.message) {
         msg = xhr.responseJSON.message;
     } else if (xhr.status === 406) {
+        error_log(msg);
         msg = "Request blocked (406). Check file size or mod_security.";
     } else if (xhr.status === 500) {
+        error_log(msg);
         msg = "Server error. Check logs.";
     }
 
     showAlert("danger", msg);
+    error_log("AJAX Error:", xhr);
     console.error("AJAX Error:", xhr);
 
     $btn.prop("disabled", false).text(
