@@ -126,10 +126,37 @@ try {
 
   $sea['attachments'] = array_merge($keepAttachments, $newAttachments);
 
-  if (file_put_contents($jsonFile, json_encode($sea, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
-    throw new Exception('Failed to save SEA data');
+  // if (file_put_contents($jsonFile, json_encode($sea, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
+  //   throw new Exception('Failed to save SEA data');
+  // }
+  $jsonData = json_encode($sea, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+  if ($jsonData === false) {
+    throw new Exception("JSON encoding failed: " . json_last_error_msg());
   }
 
+  $bytes = file_put_contents($jsonFile, $jsonData);
+
+  if ($bytes === false) {
+    $errorMessage = "Failed to write file\n\n";
+
+    $errorMessage .= "Target path:\n" . $jsonFile . "\n\n";
+
+    $errorMessage .= "Directory exists?  → " . (is_dir(dirname($jsonFile)) ? 'YES' : '**NO**') . "\n";
+    $errorMessage .= "Directory writable? → " . (is_writable(dirname($jsonFile)) ? 'YES' : '**NO**') . "\n";
+
+    if (is_dir(dirname($jsonFile))) {
+      $errorMessage .= "Realpath of directory: " . realpath(dirname($jsonFile)) . "\n";
+    }
+
+    if (file_exists($jsonFile)) {
+      $errorMessage .= "File already exists but is not writable → " . (is_writable($jsonFile) ? 'writable' : '**NOT writable**') . "\n";
+    }
+
+    $errorMessage .= "\nPHP error (if any):\n" . error_get_last()['message'] ?? '(no error_get_last info)';
+
+    throw new Exception($errorMessage);
+  }
 
   ob_end_clean();
 
