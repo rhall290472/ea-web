@@ -175,7 +175,7 @@
         </div>
       </h2>
 
-      <form id="seaForm" enctype="multipart/form-data">
+      <form id="seaForm" class="needs-validation" novalidate enctype="multipart/form-data">
         <input type="hidden" id="sea_action" name="action" value="create">
         <input type="hidden" id="sea_id" name="sea_id" value="">
 
@@ -259,6 +259,7 @@
               <option value="A320">A320</option>
               <!-- add more fleets here -->
             </select>
+            <div class="invalid-feedback">Please select a fleet.</div>
           </div>
 
           <!-- Device (multi-select) -->
@@ -616,8 +617,20 @@
         // -------------------------------------------------
         $('#seaForm').on('submit', function (e) {
           e.preventDefault();
+          const form = this;
           const $form = $(this);
           const $btn = $('#submitBtn');
+
+          if (form.checkValidity() === false) {
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            $btn.prop('disabled', false).text(
+              $('#sea_action').val() === 'create' ? 'Create SEA' : 'Update SEA'
+            );
+            return;
+          }
+
+          form.classList.add('was-validated');
           $btn.prop('disabled', true).text('Saving...');
 
           // Clear old alerts
@@ -732,7 +745,6 @@
         window.showCreateForm = function () {
           hideAll();
           resetForm();               // <-- NEW
-          addPartRow();  // Add initial blank row for new SEA
           $('#createForm').removeClass('hidden');
 
           if (!$('#sea_id').val()) {
@@ -747,9 +759,6 @@
             addPartRow();
             addInstrRow();
 
-            // === PREVIEW ID: Generate initial preview ===
-            generateIdPreview();
-
             // === LIVE UPDATE: When fleet changes, update ID preview ===
             $('#fleet').off('change.idPreview').on('change.idPreview', generateIdPreview);
           } else {
@@ -761,9 +770,12 @@
         // === HELPER: Generate and display SEA ID preview ===
         function generateIdPreview() {
           const fleetSelect = $('#fleet');
-          let fleet = fleetSelect.val() || 'UNKNOWN';
+          let fleet = fleetSelect.val();
+          if (!fleet) {
+            $('#display_id').val('');
+            return;
+          }
           fleet = fleet.toUpperCase().replace(/[^A-Z0-9]/g, '');
-          if (fleet === '') fleet = 'UNKNOWN';
 
           const today = new Date();
           const datePart = today.toISOString().slice(2, 10).replace(/-/g, ''); // YYYYMMDD
@@ -1113,6 +1125,10 @@
           formEl.reset();
         }
 
+        // Explicitly clear SEA IDs to prevent carryover
+        $('#sea_id').val('');
+        $('#display_id').val('');
+
         // 2. Clear Select2 fields (not reset by form.reset())
         $('#fleet, #device, #priority, #status').val('').trigger('change');
 
@@ -1134,8 +1150,9 @@
         $('#ea_number, #revision, #impact, #justification, #description, #requester, #target_date')
           .val('');
 
-        // 7. Remove alerts
+        // 7. Remove alerts and validation classes
         $('.alert').remove();
+        formEl.classList.remove('was-validated');
       }
     </script>
 
