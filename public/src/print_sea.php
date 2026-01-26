@@ -222,6 +222,8 @@ $mpdf = new Mpdf([
   'margin_footer' => 10,  // Space between footer and body
 ]);
 
+$mpdf->showImageErrors = true;
+$mpdf->debug = true;
 // Set Header (with image - replace 'path/to/logo.png' with your actual image path)
 $header = '
 <div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
