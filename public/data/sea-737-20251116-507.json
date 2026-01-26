@@ -1,0 +1,32 @@
+{
+    "id": "737-20251116-507",
+    "requester": "Richard Hall",
+    "description": "B737-800/900ER Starlink Wi-Fi Electrical Installation",
+    "justification": "This EA will install the Starlink Aviation System on United Airlines' Boeing 737-800 and 737-900ER. The Starlink Aviation System provides Wi-Fi over IEEE 802.11 a/b/g/n/ac 2.4 GHz and 5 GHz Wi-Fi connectivity and will include integration with the Panasonic ex1 System per these EA instructions, where applicable. Starlink will replace the existing Thales Gen 1 Ka Band Connectivity System, Viasat Gen 2 Broadband Connectivity System, or Viasat Gen 3 Broadband Connectivity System currently installed.",
+    "impact": "A new panel will be installed in the overhead P5 panel. Three new circuit breakers will be installed on the P6-1 panel.",
+    "priority": "Low",
+    "target_date": "2026-06-01",
+    "timestamp": "2026-01-25 17:30:42",
+    "status": "Planning",
+    "version": 5,
+    "parts_json": "[{\"part\":\"LED-52-14-BA2-E32UH\",\"desc\":\"Annunciator SATLINK\",\"type\":\"add\",\"qty\":\"1\"}]",
+    "instructions_json": "[{\"instruction\":\"<p><span style=\\\"text-decoration: underline;\\\"><strong>P5 Panel Modification</strong></span> (Reference <span style=\\\"text-decoration: underline;\\\">Starlink Drawing 06654102-576 Sheet 7 and&nbsp; Detail H.</span></p>\\n<p>If the P5 panel does not already have a SATLINK switch installed, accomplish the following:</p>\\n<ul>\\n<li>Ensure electrical power is removed from the simulator.</li>\\n<li>Gain access to the flight area P5 Panel.</li>\\n<li>Unlatch the P5 overhead panel and let the panel hang down.</li>\\n<li>Locate and remove the blanking plate currently installed where Sheet 7 shows the new switch assembly.</li>\\n<li>Modify the removed or new blanking plate to create the cutout of the Starlink Switch per&nbsp;</li>\\n<li>Install switch assembly P/N LED-52-14-BA2-E32UH\\n<ol>\\n<li>Slide the switch through the hole on the blanking plate&nbsp;</li>\\n<li>Insert the mounting sleeve over the back end of the switch, following orientation as shown in the installation drawing</li>\\n<li>Carefully remove the switch cap from the housing</li>\\n<li>Locate the two mounting lug screws inside the switch housing. Tighten screws until lugs hold the mounting sleeve in place. Torque to hand tight.</li>\\n<li>Install the backing plate with the switch back into the P5 AFT overhead panel. Rotate the 4 quarter-turn&nbsp;fasteners clockwise to lock the panel in place.</li>\\n</ol>\\n</li>\\n</ul>\",\"notes\":\"\"},{\"instruction\":\"<p><span style=\\\"text-decoration: underline;\\\"><strong>P6 Panel Modification</strong></span> (Reference Drawing 06654102-627 Sheet 9.)</p>\\n<ul>\\n<li>Gain access to the P6-1 circuit breaker panel</li>\\n<li>Install the circuit breakers below at the specified locations. Label the circuit breakers per Starlink Drawing 06654102-627 Figure 14 and FN11 :</li>\\n</ul>\\n<table style=\\\"border-collapse: collapse; width: 100%;\\\" border=\\\"1\\\"><colgroup><col style=\\\"width: 25%;\\\"><col style=\\\"width: 25%;\\\"><col style=\\\"width: 25%;\\\"><col style=\\\"width: 25%;\\\"></colgroup>\\n<tbody>\\n<tr>\\n<td>Position</td>\\n<td>Description</td>\\n<td>Part Number</td>\\n<td>Amps</td>\\n</tr>\\n<tr>\\n<td>C9</td>\\n<td>C9101</td>\\n<td>&nbsp;</td>\\n<td>5A</td>\\n</tr>\\n<tr>\\n<td>C10</td>\\n<td>C9102</td>\\n<td>&nbsp;</td>\\n<td>5A</td>\\n</tr>\\n<tr>\\n<td>C11</td>\\n<td>C9103</td>\\n<td>&nbsp;</td>\\n<td>2A</td>\\n</tr>\\n</tbody>\\n</table>\\n<ul>\\n<li>Install front placards (Item 12) on the front of the P6-1 panel as shown on Starlink Drawing 06654102-627 Sheet 9 FIGURE 14. Label the circuit breakers per Starlink Drawing 06654102-627 FN10&nbsp;</li>\\n</ul>\\n<table style=\\\"border-collapse: collapse; width: 100%; height: 108.516px;\\\" border=\\\"1\\\"><colgroup><col style=\\\"width: 33.3333%;\\\"><col style=\\\"width: 33.3333%;\\\"><col style=\\\"width: 33.3333%;\\\"></colgroup>\\n<tbody>\\n<tr style=\\\"height: 36.1719px;\\\">\\n<td>Position</td>\\n<td>Upper Label Text</td>\\n<td>Lower Label Test</td>\\n</tr>\\n<tr style=\\\"height: 36.1719px;\\\">\\n<td>C9</td>\\n<td>STARLINK 1</td>\\n<td>C9101</td>\\n</tr>\\n<tr style=\\\"height: 36.1719px;\\\">\\n<td>C10</td>\\n<td>STARLINK 2</td>\\n<td>C9102</td>\\n</tr>\\n<tr>\\n<td>C11</td>\\n<td>STLNK CNTL</td>\\n<td>C9103</td>\\n</tr>\\n</tbody>\\n</table>\\n<p>&nbsp;</p>\",\"notes\":\"\"},{\"instruction\":\"<p><span style=\\\"text-decoration: underline;\\\"><strong>P6 Wire Installation</strong></span></p>\\n<p>&nbsp;</p>\",\"notes\":\"\"}]",
+    "ea_number": "4435-04570",
+    "revision": "A",
+    "fleet": "737",
+    "device": [
+        "FFS-2",
+        "FFS-3",
+        "FFS-4",
+        "FFS-5",
+        "FFS-6",
+        "FTD-2",
+        "FTD-3",
+        "FTD-4",
+        "FFS-7",
+        "FFS-8",
+        "FFS-9",
+        "FFS-10"
+    ],
+    "attachments": []
+}

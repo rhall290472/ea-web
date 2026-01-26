@@ -1,0 +1,29 @@
+{
+    "id": "777-20251102-854",
+    "requester": "Mo Mohammad",
+    "description": "B777 Seat Inspection - All Models",
+    "justification": "In-service failures of first officer\u2019s seat adjustments have resulted in seats becoming detached during\r\ntakeoffs and landings. Airworthiness directives (ADs) has been issued requiring inspections and\r\nreplacement of seat adjustment components. The AD is comprised of two Service Bulletins (SBs). For\r\nthe Horizontal Movement System Inspection and Overhaul, United will comply by removing any of the\r\naffected seats from the aircraft and replacing with a serviceable seat from stock. For the Manual\r\nOverride Cable Inspection and Adjustment, United will comply by inspecting and adjusting per the Ipeco\r\nSBs. In order to ensure unmodified seats are not installed on any aircraft, all spare seats will be modified\r\nprior to incorporation of this EA.",
+    "impact": "Safety third! ",
+    "priority": "High",
+    "target_date": "2026-01-30",
+    "timestamp": "2026-01-26 11:12:59",
+    "status": "In Work",
+    "version": 17,
+    "parts_json": "[{\"part\":\"3A201-0007-01- 1Z\",\"desc\":\"SEAT, ASSY, CAPT\",\"type\":\"\",\"qty\":\"1\"},{\"part\":\"3A201-0008-01- 1Z\",\"desc\":\"SEAT, ASSY, FIRST OFFICER\",\"type\":\"\",\"qty\":\"1\"}]",
+    "instructions_json": "[{\"instruction\":\"<ul>\\n<li>Locate Captain's Seat and record the following information.&nbsp;Record Captain's Seat Part Number</li>\\n<li>Record Captain's Seat Serial Number.</li>\\n</ul>\",\"notes\":\"\"},{\"instruction\":\"<ul>\\n<li>Locate First Officer's Seat and record the following information.&nbsp;Record First Officer's Seat Part Number</li>\\n<li>Record First Officer's Seat Serial Number.</li>\\n</ul>\",\"notes\":\"\"},{\"instruction\":\"<ul>\\n<li>If the Captain's Seat Part Number is 3A201-0007-01-1 or 3A258-0041-01-1, replace the seat using&nbsp;Steps 2.b and 2.c.<img src=\\\"data/uploads/SEA/777-20251102-854/Screenshot_2026-01-21_154427.png\\\" alt=\\\"\\\" width=\\\"460\\\" height=\\\"465\\\"></li>\\n</ul>\",\"notes\":\"\"}]",
+    "ea_number": "2511-01447",
+    "revision": "C",
+    "fleet": "777",
+    "device": [
+        "FFS-1",
+        "FFS-2",
+        "FFS-3",
+        "FFS-5",
+        "FFS-6",
+        "FFS-7"
+    ],
+    "attachments": [
+        "/data/uploads/SEA/777-20251102-854/AGB_Issue_42A6_1.png",
+        "/data/uploads/SEA/777-20251102-854/AGB_Issue_42A6_2.png"
+    ]
+}
