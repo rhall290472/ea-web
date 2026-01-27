@@ -5,7 +5,7 @@
 // -----------------------------
 // 1. Timezone
 // -----------------------------
-date_default_timezone_set('America/New_York'); // Change to your local timezone
+date_default_timezone_set('America/Denver'); // Change to your local timezone
 
 // -----------------------------
 // 2. Paths (auto-calculated)
