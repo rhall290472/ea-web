@@ -328,14 +328,19 @@
     <div id="listView" class="hidden">
       <button class="btn btn-sm btn-outline-secondary mb-3" onclick="goBack()">Back</button>
       <h3>Existing SEAs</h3>
-      <div class="row mb-3">
-        <div class="col-md-6">
-          <input type="text" id="searchInput" class="form-control" placeholder="Search by keyword...">
+      <div class="row mb-3 g-3">
+        <div class="col-md-4">
+          <input type="text" id="searchInput" class="form-control" placeholder="Search by keyword, ID, author...">
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <select id="fleetFilter" class="form-select">
             <option value="">All Fleets</option>
-            <!-- Options will be populated dynamically -->
+            <!-- populated dynamically -->
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select id="statusFilter" class="form-select">
+            <!-- options populated dynamically -->
           </select>
         </div>
       </div>
@@ -820,11 +825,9 @@
             .then(html => {
               $c.html(html);
 
-              // Reset and populate fleet filter
-              // Inside loadSeaList(), after populating .sea-card
+              // Populate fleet filter
               $('#fleetFilter').html('<option value="">All Fleets</option>');
               const fleets = new Set();
-
               $('.sea-card').each(function () {
                 const $card = $(this);
                 const $fleetStrong = $card.find('strong').filter((_, el) => $(el).text().trim() === 'Fleet:');
@@ -840,58 +843,117 @@
                   if (fleetVal) fleets.add(fleetVal);
                 }
               });
-
               Array.from(fleets).sort().forEach(f => {
                 $('#fleetFilter').append(`<option value="${f}">${f}</option>`);
               });
-              // Trigger initial filter (in case of URL params or defaults)
+
+              // Populate status filter — always clear first
+              $('#statusFilter')
+                .empty()                           // ← remove all existing <option>s
+                .append('<option value="">All Statuses</option>');
+
+              const statuses = new Set();
+
+              $('.sea-card').each(function () {
+                const $card = $(this);
+                const $badge = $card.find('.card-header .badge');
+                if ($badge.length) {
+                  const statusVal = $badge.text().trim();
+                  if (statusVal) statuses.add(statusVal);
+                }
+              });
+
+              Array.from(statuses).sort().forEach(s => {
+                $('#statusFilter').append(`<option value="${s}">${s}</option>`);
+              });
+
+              console.log("Detected statuses:", Array.from(statuses));
+              console.log("Final options in dropdown:", $('#statusFilter option').map((i, el) => $(el).val()).get());
+
+              // Trigger initial filter
               filterList();
             })
             .catch(err => $c.html(`<div class="alert alert-danger">Failed: ${err.message}</div>`));
         }
-
         // Combined filtering function
         function filterList() {
           const term = $('#searchInput').val().toLowerCase().trim();
-          const selectedFleet = $('#fleetFilter').val(); // Keep original case for comparison
+          const selectedFleet = $('#fleetFilter').val();
+          const selectedStatus = $('#statusFilter').val();
 
           $('.sea-card').each(function () {
             const $card = $(this);
             const $col = $card.closest('.col-md-6');
 
-            // --- Search term match ---
+            // Search term match
             const fullText = $card.text().toLowerCase();
             const matchesSearch = !term || fullText.includes(term);
 
-            // --- Fleet match: Look for <strong>Fleet:</strong> followed by value ---
+            // Fleet match (your existing code – looks good)
             let cardFleet = '';
             const $fleetStrong = $card.find('strong').filter(function () {
               return $(this).text().trim() === 'Fleet:';
             });
             if ($fleetStrong.length) {
-              // Get the text *after* the <strong>Fleet:</strong>
               const fleetNode = $fleetStrong[0].nextSibling;
               if (fleetNode && fleetNode.nodeType === Node.TEXT_NODE) {
                 cardFleet = fleetNode.textContent.split('|')[0].trim();
               } else {
-                // Fallback: get parent <p> and extract after "Fleet:"
                 const pText = $fleetStrong.parent().text();
                 const match = pText.match(/Fleet:\s*([^\|]+)/i);
                 cardFleet = match ? match[1].trim() : '';
               }
             }
-
             const matchesFleet = !selectedFleet || cardFleet === selectedFleet;
 
-            // Show/hide based on both filters
-            $col.toggle(matchesSearch && matchesFleet);
+            // Status match – use the badge
+            let cardStatus = '';
+            const $badge = $card.find('.card-header .badge');
+            if ($badge.length) {
+              cardStatus = $badge.text().trim();
+            }
+            const matchesStatus = !selectedStatus || cardStatus === selectedStatus;
+
+            // Show/hide
+            $col.toggle(matchesSearch && matchesFleet && matchesStatus);
           });
+          updateStatusFilterOptions();
         }
-
-
         // Event listeners for filtering
         $('#searchInput').on('input', filterList);
         $('#fleetFilter').on('change', filterList);
+        $('#statusFilter').on('change', filterList);
+
+
+        function updateStatusFilterOptions() {
+          $('#statusFilter')
+            .empty()
+            .append('<option value="">All Statuses</option>');
+
+          const visibleStatuses = new Set();
+
+          // Only look at cards that are currently visible (after fleet & search applied)
+          $('.sea-card:visible').each(function () {
+            const $card = $(this);
+            const $badge = $card.find('.card-header .badge');
+            if ($badge.length) {
+              const statusVal = $badge.text().trim();
+              if (statusVal) visibleStatuses.add(statusVal);
+            }
+          });
+
+          Array.from(visibleStatuses).sort().forEach(s => {
+            $('#statusFilter').append(`<option value="${s}">${s}</option>`);
+          });
+
+          // Optional: preserve previous selection if it still exists
+          const previous = $('#statusFilter').data('last-selected') || '';
+          if (previous && $('#statusFilter option[value="' + previous + '"]').length) {
+            $('#statusFilter').val(previous);
+          } else {
+            $('#statusFilter').val(''); // reset to All if old value disappeared
+          }
+        }
 
 
         window.deleteSea = function (id) {
