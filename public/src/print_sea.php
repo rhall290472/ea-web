@@ -1,7 +1,26 @@
 <?php
+// Force show errors + log to a file in the same directory as this script
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+$customLogFile = __DIR__ . '/mpdf-errors.log';  // Creates mpdf-errors.log INSIDE /src/
+
+ini_set('log_errors', 1);
+ini_set('error_log', $customLogFile);
+
+// Quick writable test
+if (!is_writable(__DIR__)) {
+    die("Cannot write to script directory: " . __DIR__ . " — check permissions");
+}
+
+
+
+ob_start();  // buffer output to catch early sends
 // src/print_sea.php
 require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+//require_once __DIR__ . '/../vendor/autoload.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
 use Mpdf\Mpdf;
 
@@ -28,10 +47,11 @@ function h($s)
 {
   return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
 }
-function nl2br_h($s)
-{
-  return nl2br(h($s));
+function nl2br_h($s) {
+    $s = htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8');
+    return str_replace(["\r\n", "\r", "\n"], '<br>', $s);  // clean <br> without space
 }
+
 
 // ------------------------------------------------------------------
 // 3. PARTS TABLE
@@ -112,18 +132,31 @@ if (!empty($sea['device'])) {
 }
 
 // Helper: safely allow basic HTML in rich text fields + convert newlines
-function allow_html($s)
-{
-  $s = $s ?? '—';
-  // Convert newlines to <br> first (before any existing HTML)
-  $s = nl2br($s);
-  // If you want to sanitize (recommended for untrusted input):
-  // Require HTMLPurifier via Composer, then:
-  // $purifier = new HTMLPurifier();
-  // return $purifier->purify($s);
-  // Allowed tags: p, br, b, i, u, strong, em, ul, ol, li, etc.
-  return $s;  // Raw with <br> added; tags from input will render
+function allow_html($s) {
+    $s = $s ?? '—';
+    $s = stripslashes($s);
+    $s = str_replace(["\r\n", "\r", "\n"], '<br>', $s);
+    
+
+    // Use HTTPS if your site has SSL; otherwise keep http
+    $baseUrl = 'http://simea.dentk.com/';
+
+    // Match and replace any src="data/uploads/..." or src='data/uploads/...' (with optional spaces)
+    $s = preg_replace(
+        '/(src\s*=\s*["\'])\s*(data\/uploads\/[^"\']+?)\s*(["\'])/i',
+        '$1' . $baseUrl . '$2$3',
+        $s
+    );
+
+    // If the image is present, log a snippet of the final string (for verification)
+    if (stripos($s, 'Screenshot_2026-01-21_154427.png') !== false) {
+        error_log("[MPDF-DEBUG-FINAL] allow_html output snippet:\n" . substr($s, stripos($s, '<img'), 500));
+    }
+
+    return $s;
 }
+
+
 
 
 // ------------------------------------------------------------------
@@ -212,6 +245,21 @@ $html = str_replace(array_keys($replacements), array_values($replacements), $htm
 // 8. CREATE & SEND PDF
 // ------------------------------------------------------------------
 ob_clean();
+
+// Temporary bypass for PSR shim type conflict
+if (class_exists('Mpdf\PsrHttpMessageShim\Request', false)) {
+    class_alias('stdClass', 'Mpdf\PsrHttpMessageShim\Request');
+}
+if (class_exists('Mpdf\PsrHttpMessageShim\Response', false)) {
+    class_alias('stdClass', 'Mpdf\PsrHttpMessageShim\Response');
+}
+if (class_exists('Mpdf\PsrHttpMessageShim\Stream', false)) {
+    class_alias('stdClass', 'Mpdf\PsrHttpMessageShim\Stream');
+}
+if (class_exists('Mpdf\PsrHttpMessageShim\Uri', false)) {
+    class_alias('stdClass', 'Mpdf\PsrHttpMessageShim\Uri');
+}
+
 $mpdf = new Mpdf([
   'format' => 'Letter',
   'margin_left' => 15,
@@ -222,12 +270,36 @@ $mpdf = new Mpdf([
   'margin_footer' => 10,  // Space between footer and body
 ]);
 
+$mpdf->setBasePath('http://simea.dentk.com/');
+
+// === Enhanced debug for body images ===
 $mpdf->showImageErrors = true;
 $mpdf->debug = true;
+
+
+// 2. Log temp dir (critical for PNG alpha/interlaced processing)
+$mpdf->tempDir = sys_get_temp_dir();  // usually /tmp
+error_log("mPDF tempDir: " . $mpdf->tempDir);
+error_log("tempDir writable? " . (is_writable($mpdf->tempDir) ? 'YES' : 'NO - FIX THIS!'));
+
+// 3. Inject a visible test image EARLY in body (before your main $html)
+$testImageHtml = '
+<p><strong>DEBUG TEST IMAGE (remote PNG - should appear if images work at all):</strong></p>
+<img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" width="200" alt="Google Test">
+<p><strong>DEBUG TEST IMAGE (local relative - adjust if needed):</strong></p>
+<img src="/images/test.png" width="100" alt="Local Test">  <!-- create a test.png if you want -->
+<hr>
+';
+
+// Add this BEFORE replacing placeholders or WriteHTML
+$html = $testImageHtml . $html;  // prepend to see it at top of PDF
+
+
+
 // Set Header (with image - replace 'path/to/logo.png' with your actual image path)
 $header = '
 <div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
-    <img src="../images/United-Airlines-Logo.png" width="100" alt="Logo">  <!-- Adjust width as needed -->
+    <img src="http://simea.dentk.com/images/United-Airlines-Logo.png" width="100">  <!-- Adjust width as needed -->
 </div>';
 $mpdf->SetHTMLHeader($header);
 
@@ -277,5 +349,6 @@ if (!empty($sea['attachments']) && is_array($sea['attachments'])) {
 // 10. OUTPUT
 // ------------------------------------------------------------------
 $filename = 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf';
+ob_end_clean();
 $mpdf->Output($filename, 'D');
 exit;

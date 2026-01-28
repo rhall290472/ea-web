@@ -1,9 +1,14 @@
-
 RewriteEngine On
+
+# Force HTTPS and remove www (unconditional – applies to all requests)
 RewriteCond %{HTTPS} off [OR]
 RewriteCond %{HTTP_HOST} ^www\. [NC]
-RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
-RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301,NE]
+RewriteRule ^ https://simea.dentk.com%{REQUEST_URI} [L,R=301,NE]
 
-# Set default index file
+# Front-controller / SPA routing – only for non-existing files/directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+# Default index file
 DirectoryIndex index.html
