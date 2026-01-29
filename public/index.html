@@ -147,23 +147,39 @@
               </p>
 
               <script>
-                fetch('version.json')
-                  .then(r => r.ok ? r.json() : { tag: 'dev', commit: '??', date: 'unknown' })
-                  .then(v => {
-                    const el = document.getElementById('versionInfo');
-                    el.innerHTML = `
-        <strong>Version:</strong> 
-        <a href="https://github.com/rhall290472/ea-web/commit/${v.commit}" target="_blank" class="text-decoration-none">
-          ${v.tag}
-        </a>
-        <code class="text-muted">(${v.commit})</code>
-        | <strong>Last Updated:</strong> ${v.date}
-      `;
+                // Use the branch that GitHub Pages is built from (usually 'main' or 'gh-pages')
+                const repo = 'rhall290472/ea-web';
+                const ref = 'main';           // ← change to your Pages branch if different
+
+                fetch(`https://api.github.com/repos/${repo}/git/ref/heads/${ref}`)
+                  .then(r => r.json())
+                  .then(data => {
+                    const sha = data.object.sha;
+                    const shortSha = sha.slice(0, 7);
+
+                    // Optional: also get the latest tag that points to this commit
+                    return fetch(`https://api.github.com/repos/${repo}/tags?per_page=1`)
+                      .then(r => r.json())
+                      .then(tags => tags.length > 0 && tags[0].commit.sha === sha ? tags[0].name : null)
+                      .then(tag => ({ sha, shortSha, tag }));
+                  })
+                  .then(({ sha, shortSha, tag }) => {
+                    const version = tag || shortSha;
+                    const link = `https://github.com/${repo}/commit/${sha}`;
+                    const date = new Date().toLocaleDateString(); // or fetch commit date if needed
+
+                    document.getElementById('versionInfo').innerHTML = `
+      <strong>Version:</strong> 
+      <a href="${link}" target="_blank" class="text-decoration-none">
+        ${version}
+      </a>
+      <code class="text-muted">(${shortSha})</code>
+      | <strong>Last Updated:</strong> ${date}
+    `;
                   })
                   .catch(() => {
                     document.getElementById('versionInfo').innerHTML = '<em>Version info unavailable</em>';
-                  });
-              </script>
+                  });              </script>
             </div>
           </div>
         </div>
@@ -870,6 +886,8 @@
               console.log("Detected statuses:", Array.from(statuses));
               console.log("Final options in dropdown:", $('#statusFilter option').map((i, el) => $(el).val()).get());
 
+              // NEW: populate status filter once, from all items
+              populateStatusFilterOnce();
               // Trigger initial filter
               filterList();
             })
@@ -917,7 +935,7 @@
             // Show/hide
             $col.toggle(matchesSearch && matchesFleet && matchesStatus);
           });
-          updateStatusFilterOptions();
+          //updateStatusFilterOptions();
         }
         // Event listeners for filtering
         $('#searchInput').on('input', filterList);
@@ -925,36 +943,29 @@
         $('#statusFilter').on('change', filterList);
 
 
-        function updateStatusFilterOptions() {
-          $('#statusFilter')
-            .empty()
-            .append('<option value="">All Statuses</option>');
+// -------------------------------------------------
+// Populate status filter ONLY ONCE when list loads
+// -------------------------------------------------
+function populateStatusFilterOnce() {
+  const statuses = new Set();
 
-          const visibleStatuses = new Set();
+  // Look at ALL cards (not just visible ones)
+  $('.sea-card').each(function () {
+    const $badge = $(this).find('.card-header .badge');
+    if ($badge.length) {
+      const statusVal = $badge.text().trim();
+      if (statusVal) statuses.add(statusVal);
+    }
+  });
 
-          // Only look at cards that are currently visible (after fleet & search applied)
-          $('.sea-card:visible').each(function () {
-            const $card = $(this);
-            const $badge = $card.find('.card-header .badge');
-            if ($badge.length) {
-              const statusVal = $badge.text().trim();
-              if (statusVal) visibleStatuses.add(statusVal);
-            }
-          });
+  $('#statusFilter')
+    .empty()
+    .append('<option value="">All Statuses</option>');
 
-          Array.from(visibleStatuses).sort().forEach(s => {
-            $('#statusFilter').append(`<option value="${s}">${s}</option>`);
-          });
-
-          // Optional: preserve previous selection if it still exists
-          const previous = $('#statusFilter').data('last-selected') || '';
-          if (previous && $('#statusFilter option[value="' + previous + '"]').length) {
-            $('#statusFilter').val(previous);
-          } else {
-            $('#statusFilter').val(''); // reset to All if old value disappeared
-          }
-        }
-
+  Array.from(statuses).sort().forEach(s => {
+    $('#statusFilter').append(`<option value="${s}">${s}</option>`);
+  });
+}
 
         window.deleteSea = function (id) {
           if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;
