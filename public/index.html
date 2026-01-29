@@ -147,39 +147,54 @@
               </p>
 
               <script>
-                // Use the branch that GitHub Pages is built from (usually 'main' or 'gh-pages')
+                // Customize these:
                 const repo = 'rhall290472/ea-web';
-                const ref = 'main';           // ← change to your Pages branch if different
+                const ref = 'main';  // ← your GitHub Pages branch (usually 'main' or 'gh-pages')
+
+                const versionInfo = document.getElementById('versionInfo');
 
                 fetch(`https://api.github.com/repos/${repo}/git/ref/heads/${ref}`)
-                  .then(r => r.json())
+                  .then(r => {
+                    if (!r.ok) throw new Error('Failed to fetch branch ref');
+                    return r.json();
+                  })
                   .then(data => {
                     const sha = data.object.sha;
                     const shortSha = sha.slice(0, 7);
 
-                    // Optional: also get the latest tag that points to this commit
-                    return fetch(`https://api.github.com/repos/${repo}/tags?per_page=1`)
-                      .then(r => r.json())
-                      .then(tags => tags.length > 0 && tags[0].commit.sha === sha ? tags[0].name : null)
-                      .then(tag => ({ sha, shortSha, tag }));
+                    // Now check for tags that point exactly to this commit SHA
+                    return fetch(`https://api.github.com/repos/${repo}/tags?per_page=100`)
+                      .then(r => {
+                        if (!r.ok) return []; // fallback if tags fetch fails
+                        return r.json();
+                      })
+                      .then(tags => {
+                        // Find the first tag (GitHub returns tags in reverse-chronological order ≈ most recent first)
+                        const matchingTag = tags.find(tag => tag.commit.sha === sha);
+                        return { sha, shortSha, tag: matchingTag ? matchingTag.name : null };
+                      });
                   })
                   .then(({ sha, shortSha, tag }) => {
                     const version = tag || shortSha;
                     const link = `https://github.com/${repo}/commit/${sha}`;
-                    const date = new Date().toLocaleDateString(); // or fetch commit date if needed
+                    const date = new Date().toLocaleDateString('en-US', {
+                      year: 'numeric', month: 'short', day: 'numeric'
+                    });
 
-                    document.getElementById('versionInfo').innerHTML = `
-      <strong>Version:</strong> 
-      <a href="${link}" target="_blank" class="text-decoration-none">
-        ${version}
-      </a>
-      <code class="text-muted">(${shortSha})</code>
-      | <strong>Last Updated:</strong> ${date}
-    `;
+                    versionInfo.innerHTML = `
+        <strong>Version:</strong> 
+        <a href="${link}" target="_blank" class="text-decoration-none">
+          ${version}
+        </a>
+        <code class="text-muted">(${shortSha})</code>
+        | <strong>Last Updated:</strong> ${date}
+      `;
                   })
-                  .catch(() => {
-                    document.getElementById('versionInfo').innerHTML = '<em>Version info unavailable</em>';
-                  });              </script>
+                  .catch(err => {
+                    console.error(err);
+                    versionInfo.innerHTML = '<em>Version info unavailable</em>';
+                  });
+              </script>
             </div>
           </div>
         </div>
@@ -943,29 +958,29 @@
         $('#statusFilter').on('change', filterList);
 
 
-// -------------------------------------------------
-// Populate status filter ONLY ONCE when list loads
-// -------------------------------------------------
-function populateStatusFilterOnce() {
-  const statuses = new Set();
+        // -------------------------------------------------
+        // Populate status filter ONLY ONCE when list loads
+        // -------------------------------------------------
+        function populateStatusFilterOnce() {
+          const statuses = new Set();
 
-  // Look at ALL cards (not just visible ones)
-  $('.sea-card').each(function () {
-    const $badge = $(this).find('.card-header .badge');
-    if ($badge.length) {
-      const statusVal = $badge.text().trim();
-      if (statusVal) statuses.add(statusVal);
-    }
-  });
+          // Look at ALL cards (not just visible ones)
+          $('.sea-card').each(function () {
+            const $badge = $(this).find('.card-header .badge');
+            if ($badge.length) {
+              const statusVal = $badge.text().trim();
+              if (statusVal) statuses.add(statusVal);
+            }
+          });
 
-  $('#statusFilter')
-    .empty()
-    .append('<option value="">All Statuses</option>');
+          $('#statusFilter')
+            .empty()
+            .append('<option value="">All Statuses</option>');
 
-  Array.from(statuses).sort().forEach(s => {
-    $('#statusFilter').append(`<option value="${s}">${s}</option>`);
-  });
-}
+          Array.from(statuses).sort().forEach(s => {
+            $('#statusFilter').append(`<option value="${s}">${s}</option>`);
+          });
+        }
 
         window.deleteSea = function (id) {
           if (!confirm(`Delete SEA-${id}? This cannot be undone.`)) return;

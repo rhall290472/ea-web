@@ -61,6 +61,14 @@ if (defined('ENABLE_EMAIL') && ENABLE_EMAIL) {
     mail(ADMIN_EMAIL, $subject, $message, $headers);
 }
 
+// Dynamically set BASE_URL based on environment
+$is_localhost = isset($_SERVER['SERVER_NAME']) && in_array($_SERVER['SERVER_NAME'], ['localhost', '127.0.0.1']);
+
+if($is_localhost)
+  define('BASE_URL', 'http://localhost/ea-web/public');
+else
+  define('BASE_URL', 'http://simea.dentk.com/');
+
 // Add this line near the end
 foreach ([DATA_DIR, UPLOAD_DIR, DATA_DIR . '/history'] as $dir) {
     if (!is_dir($dir)) mkdir($dir, 0755, true);

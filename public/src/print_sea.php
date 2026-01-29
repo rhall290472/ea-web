@@ -20,7 +20,11 @@ ob_start();  // buffer output to catch early sends
 // src/print_sea.php
 require_once __DIR__ . '/../../config.php';
 //require_once __DIR__ . '/../vendor/autoload.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
+if($is_localhost){
+  require_once '../../vendor/autoload.php';
+}
+else
+  require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
 
 use Mpdf\Mpdf;
 
@@ -139,7 +143,8 @@ function allow_html($s) {
     
 
     // Use HTTPS if your site has SSL; otherwise keep http
-    $baseUrl = 'http://simea.dentk.com/';
+    //TODO: $baseUrl = 'http://simea.dentk.com/';
+    $baseUrl = BASE_URL;
 
     // Match and replace any src="data/uploads/..." or src='data/uploads/...' (with optional spaces)
     $s = preg_replace(
@@ -270,7 +275,8 @@ $mpdf = new Mpdf([
   'margin_footer' => 10,  // Space between footer and body
 ]);
 
-$mpdf->setBasePath('http://simea.dentk.com/');
+//TODO:$mpdf->setBasePath('http://simea.dentk.com/');
+$mpdf->setBasePath(BASE_URL);
 
 // === Enhanced debug for body images ===
 $mpdf->showImageErrors = true;
@@ -297,10 +303,17 @@ $html = $testImageHtml . $html;  // prepend to see it at top of PDF
 
 
 // Set Header (with image - replace 'path/to/logo.png' with your actual image path)
-$header = '
+if($is_localhost){
+  $header = '';
+  //TODO:
+}
+else{
+  $header = '
 <div style="text-align: left; border-bottom: 1px solid #ddd; padding-bottom: 20px;">
     <img src="http://simea.dentk.com/images/United-Airlines-Logo.png" width="100">  <!-- Adjust width as needed -->
 </div>';
+}
+
 $mpdf->SetHTMLHeader($header);
 
 // Set Footer (page x of x and SEA version)
