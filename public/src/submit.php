@@ -10,8 +10,10 @@ ini_set('error_log', $customLogFile);
 
 // src/submit.php
 require_once __DIR__ . '/../../config.php';
+if($is_localhost)
+  require_once $_SERVER['DOCUMENT_ROOT'] . '/ea-web/vendor/autoload.php';
+else
 require_once $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';
-
 
 use Mpdf\Mpdf;
 

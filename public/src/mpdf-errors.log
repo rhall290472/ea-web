@@ -110,3 +110,15 @@ Stack trace:
 <img src="../data/uploads/SEA/777-20251102-854/Screenshot_2026-01-21_154427.png" alt="" width="460" height="465"></li><br></ul>
 [29-Jan-2026 09:41:24 America/Denver] mPDF tempDir: C:\Users\rhall\AppData\Local\Temp
 [29-Jan-2026 09:41:24 America/Denver] tempDir writable? YES
+[30-Jan-2026 19:27:54 America/Denver] PHP Warning:  require_once(C:/xampp/htdocs/../vendor/autoload.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\ea-web\public\src\submit.php on line 13
+[30-Jan-2026 19:27:54 America/Denver] PHP Fatal error:  Uncaught Error: Failed opening required 'C:/xampp/htdocs/../vendor/autoload.php' (include_path='.;C:\php\pear') in C:\xampp\htdocs\ea-web\public\src\submit.php:13
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\ea-web\public\src\submit.php on line 13
+[30-Jan-2026 19:28:00 America/Denver] PHP Warning:  require_once(C:/xampp/htdocs/../vendor/autoload.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\ea-web\public\src\submit.php on line 13
+[30-Jan-2026 19:28:00 America/Denver] PHP Fatal error:  Uncaught Error: Failed opening required 'C:/xampp/htdocs/../vendor/autoload.php' (include_path='.;C:\php\pear') in C:\xampp\htdocs\ea-web\public\src\submit.php:13
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\ea-web\public\src\submit.php on line 13
+[30-Jan-2026 19:32:12 America/Denver] PHP Warning:  Undefined variable $pdfError in C:\xampp\htdocs\ea-web\public\src\submit.php on line 177
+[30-Jan-2026 19:33:00 America/Denver] PHP Warning:  Undefined variable $pdfError in C:\xampp\htdocs\ea-web\public\src\submit.php on line 177
