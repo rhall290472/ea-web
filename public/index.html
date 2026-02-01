@@ -744,6 +744,7 @@
                 $('#formTitle').text('Edit SEA – ' + res.sea_id);
                 $('#submitBtn').text('Update SEA');
                 history.replaceState(null, null, '?id=' + res.sea_id);
+                editSea(res.sea_id);
               }
 
               // Refresh attachments list
