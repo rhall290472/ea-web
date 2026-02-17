@@ -6,11 +6,11 @@
     "impact": "",
     "priority": "Medium",
     "target_date": "",
-    "timestamp": "2025-11-10 14:41:26",
+    "timestamp": "2026-02-09 10:42:19",
     "status": "Planning",
-    "version": 1,
+    "version": 2,
     "parts_json": "[{\"part\":\"\",\"desc\":\"\",\"type\":\"\",\"qty\":\"\"}]",
-    "instructions_json": "[{\"instruction\":\"\",\"notes\":\"\"}]",
+    "instructions_json": "[{\"instruction\":\"<p>Inspection of Third Observer Seat Part Number</p>\\n<ol>\\n<li>Gain access as necessary to read part number and serial number on the back of third observer seat (Attached to Circuit Breaker Panel 12XVU)</li>\\n<li>Update DR with part number and serial number and route back to engineering for disposition</li>\\n</ol>\\n<p>&nbsp;</p>\\n<p><img src=\\\"data/uploads/SEA/A320-20251110-682/mceclip0.png\\\"></p>\",\"notes\":\"\"}]",
     "ea_number": "2511-01617",
     "revision": "Orig",
     "fleet": "A320",
@@ -23,7 +23,8 @@
         "FFS-9",
         "FFS-10",
         "FFS-11",
-        "FFS-12"
+        "FFS-12",
+        "FFS-13"
     ],
     "attachments": []
 }

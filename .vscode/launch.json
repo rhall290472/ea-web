@@ -20,6 +20,17 @@
       "pathMapping": {
         "/ea-web": "${workspaceFolder}"
       }
+    },
+    {
+      "name": "edge ea-web",
+      "request": "launch",
+      "type": "msedge",
+      "url": "https://localhost/ea-web/public/index.html",
+      "webRoot": "${workspaceFolder}/public",
+      "sourceMaps": true,
+      "pathMapping": {
+        "/ea-web": "${workspaceFolder}"
+      }
     }
   ]
 }
