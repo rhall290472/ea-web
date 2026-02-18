@@ -174,7 +174,7 @@ try {
 
   $response = [
     'success' => true,
-    'message' => ($action === 'create' ? 'SEA created' : 'SEA updated') . ' successfully!' . $pdfError,
+    'message' => ($action === 'create' ? 'SEA created' : 'SEA updated') . ' successfully!' . (isset($pdfError) ? $pdfError : ''),
     'sea_id' => $sea['id'],
     'pdf' => base64_encode($pdfContent ?? ''),
     'pdf_name' => 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf'

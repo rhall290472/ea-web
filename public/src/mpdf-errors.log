@@ -122,3 +122,16 @@ Stack trace:
   thrown in C:\xampp\htdocs\ea-web\public\src\submit.php on line 13
 [30-Jan-2026 19:32:12 America/Denver] PHP Warning:  Undefined variable $pdfError in C:\xampp\htdocs\ea-web\public\src\submit.php on line 177
 [30-Jan-2026 19:33:00 America/Denver] PHP Warning:  Undefined variable $pdfError in C:\xampp\htdocs\ea-web\public\src\submit.php on line 177
+[18-Feb-2026 09:12:41 America/Denver] mPDF tempDir: C:\Users\hall\AppData\Local\Temp
+[18-Feb-2026 09:12:41 America/Denver] tempDir writable? YES
+[18-Feb-2026 09:13:03 America/Denver] PHP Fatal error:  Uncaught Mpdf\MpdfException: HTTP error: 503 in C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Http\CurlHttpClient.php:106
+Stack trace:
+#0 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\AssetFetcher.php(87): Mpdf\Http\CurlHttpClient->sendRequest(Object(Mpdf\PsrHttpMessageShim\Request))
+#1 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\AssetFetcher.php(53): Mpdf\AssetFetcher->fetchRemoteContent('http://localhos...')
+#2 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Image\ImageProcessor.php(190): Mpdf\AssetFetcher->fetchDataFromPath('http://localhos...', 'http://localhos...')
+#3 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Tag\Img.php(276): Mpdf\Image\ImageProcessor->getImage('http://localhos...', true, true, 'http://localhos...', false)
+#4 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Tag.php(240): Mpdf\Tag\Img->open(Array, Array, 213)
+#5 C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Mpdf.php(13929): Mpdf\Tag->OpenTag('IMG', Array, Array, 213)
+#6 C:\xampp\htdocs\ea-web\public\src\print_sea.php(326): Mpdf\Mpdf->WriteHTML(' <h1>Simulator ...')
+#7 {main}
+  thrown in C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Http\CurlHttpClient.php on line 106

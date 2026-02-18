@@ -397,6 +397,66 @@
           .replace(/'/g, '&#39;');
       }
 
+      // ==================== DRAFT SAVING (with Edge Tracking Prevention protection) ====================
+      function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+
+      function saveDraft() {
+        const seaId = $('#sea_id').val() || 'new';
+        const draft = {
+          sea_id: seaId,
+          impact: $('#impact').val(),
+          justification: $('#justification').val(),
+          description: $('#description').val(),
+          requester: $('#requester').val(),
+          ea_number: $('#ea_number').val(),
+          timestamp: new Date().toISOString()
+        };
+
+        try {
+          localStorage.setItem('seaDraft_' + seaId, JSON.stringify(draft));
+          console.log('✅ Draft saved locally for', seaId);
+        } catch (e) {
+          console.warn('Storage blocked by browser (Edge Tracking Prevention?):', e);
+          if (!window.draftWarningShown) {
+            window.draftWarningShown = true;
+            alert('⚠️ Browser privacy settings are blocking local draft saving.\n\n' +
+              'This usually happens in Edge with "Balanced" or "Strict" Tracking Prevention.\n\n' +
+              '• Impact Assessment changes may disappear on refresh.\n' +
+              '• Fix: Edge Settings → Privacy → Tracking prevention → set to "Basic"\n' +
+              '   or add simea.dentk.com to Exceptions.\n\n' +
+              'Chrome works without changes.');
+          }
+        }
+      }
+
+      function loadDraft(seaId) {
+        const key = 'seaDraft_' + (seaId || 'new');
+        const saved = localStorage.getItem(key);
+        if (!saved) return;
+
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.impact) $('#impact').val(draft.impact);
+          if (draft.justification) $('#justification').val(draft.justification);
+          if (draft.description) $('#description').val(draft.description);
+          if (draft.requester) $('#requester').val(draft.requester);
+          if (draft.ea_number) $('#ea_number').val(draft.ea_number);
+          console.log('✅ Draft loaded for', seaId || 'new');
+        } catch (e) {
+          console.warn('Failed to load draft', e);
+        }
+      }
+
       // AUTO-RESIZE TEXTAREA (Instruction field)
       // -------------------------------------------------
       // TinyMCE – initialise only on the instruction textarea
@@ -509,6 +569,17 @@
         $('#fleet').select2({ placeholder: "Select Fleet", allowClear: true });
         $('#device').select2({ placeholder: "Select Device(s)", allowClear: true });
 
+        // ==================== AUTO DRAFT SAVING ====================
+        const debouncedSave = debounce(saveDraft, 800);   // saves 800ms after you stop typing
+
+        // Save on any change to the most important fields
+        $('#impact, #justification, #description, #requester, #ea_number').on('input', debouncedSave);
+        $('#priority, #status, #fleet, #target_date').on('change', debouncedSave);
+
+        // Also save just before submitting (extra safety)
+        $('#seaForm').on('submit', function () {
+          saveDraft();   // final snapshot
+        });
         // -------------------------------------------------
         // AUTOSIZE: justification textarea
         // -------------------------------------------------
@@ -662,6 +733,27 @@
         // FORM SUBMIT
         // -------------------------------------------------
         $('#seaForm').on('submit', function (e) {
+          // In index.html, inside the submit event listener / fetch block
+          // (look for something like: $('#seaForm').on('submit', function(e) { ... }
+
+          console.log('DATA ABOUT TO BE SENT TO submit.php →', {
+            action: $('#sea_action').val(),
+            sea_id: $('#sea_id').val(),
+            ea_number: $('#ea_number').val(),
+            revision: $('#revision').val(),
+            requester: $('#requester').val(),
+            description: $('#description').val(),
+            justification: $('#justification').val(),
+            impact: $('#impact').val(),                    // ← most important one to watch
+            priority: $('#priority').val(),
+            target_date: $('#target_date').val(),
+            status: $('#status').val(),
+            fleet: $('#fleet').val(),
+            device: $('#device').val(),                    // array
+            parts_json: JSON.stringify(getParts()),        // your existing function
+            instructions_json: JSON.stringify(getInstructions()),
+            // attachments are handled separately via FormData
+          });
           e.preventDefault();
           const form = this;
           const $form = $(this);
@@ -736,6 +828,8 @@
 
           function handleSuccess(res) {
             if (res.success) {
+              const seaId = $('#sea_id').val() || 'new';
+              localStorage.removeItem('seaDraft_' + seaId);
               showAlert('success', res.message);
               $('html, body').animate({ scrollTop: 0 }, 300);
 
@@ -793,6 +887,7 @@
         window.showCreateForm = function () {
           hideAll();
           resetForm();               // <-- NEW
+          loadDraft('new');
           $('#createForm').removeClass('hidden');
 
           if (!$('#sea_id').val()) {
@@ -1121,6 +1216,7 @@
               $('#fleet').val(d.fleet || '').trigger('change');
               const devices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
               $('#device').val(devices).trigger('change');
+              loadDraft(d.id);
 
               // ----- Finally show the form -----
               $('#createForm').removeClass('hidden');
