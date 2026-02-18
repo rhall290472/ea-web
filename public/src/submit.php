@@ -34,7 +34,7 @@ try {
   $sea_id = $_POST['sea_id'] ?? '';
 
   $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
-  $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet); // Sanitize: only uppercase letters/numbers
+  $fleet = preg_replace('/[^A-Z0-9-]/', '', $fleet); // Sanitize: only uppercase letters/numbers
   if ($fleet === '') $fleet = 'UNKNOWN';
 
   if ($action === 'create' && empty($sea_id)) {

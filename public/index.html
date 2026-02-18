@@ -684,6 +684,7 @@
 
           // Collect form data
           const formData = new FormData(this);
+          tinymce.triggerSave();
           formData.set('parts_json', JSON.stringify(getParts()));
           formData.set('instructions_json', JSON.stringify(getInstructions()));
 
