@@ -1216,7 +1216,13 @@
               $('#fleet').val(d.fleet || '').trigger('change');
               const devices = Array.isArray(d.device) ? d.device : (d.device ? [d.device] : []);
               $('#device').val(devices).trigger('change');
-              loadDraft(d.id);
+              // Only load draft if this is still a new/unsaved SEA (id starts with 'temp' or similar)
+              if (d.id === 'temp' || !d.id || d.id.includes('new') || d.version === 0) {
+                loadDraft(d.id);
+              } else {
+                // Optional: you can log or show a message in console for debugging
+                console.log(`Skipping draft load for existing SEA ${d.id} — using saved values`);
+              }
 
               // ----- Finally show the form -----
               $('#createForm').removeClass('hidden');
