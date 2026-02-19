@@ -135,3 +135,4 @@ Stack trace:
 #6 C:\xampp\htdocs\ea-web\public\src\print_sea.php(326): Mpdf\Mpdf->WriteHTML(' <h1>Simulator ...')
 #7 {main}
   thrown in C:\xampp\htdocs\ea-web\vendor\mpdf\mpdf\src\Http\CurlHttpClient.php on line 106
+[18-Feb-2026 23:05:11 America/Denver] PHP Warning:  Undefined variable $pdfError in C:\xampp\htdocs\ea-web\public\src\submit.php on line 177

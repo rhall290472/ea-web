@@ -243,3 +243,25 @@ body {
     padding: 0.25rem;
   }
 }
+    /* ---- AUTO-RESIZE FOR INSTRUCTION TEXTAREA ---- */
+    #instrTable .instr-text {
+      resize: none;
+      /* no manual resize handle */
+      overflow: hidden;
+      /* hide scrollbars */
+      min-height: 60px;
+      /* same as original */
+    }
+
+    /* Bootstrap already ships .visually-hidden, but just in case */
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
