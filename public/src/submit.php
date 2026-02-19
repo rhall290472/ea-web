@@ -34,7 +34,7 @@ try {
   $sea_id = $_POST['sea_id'] ?? '';
 
   $fleet = strtoupper(trim($_POST['fleet'] ?? 'UNKNOWN'));
-  $fleet = preg_replace('/[^A-Z0-9-]/', '', $fleet); // Sanitize: only uppercase letters/numbers
+  $fleet = preg_replace('/[^A-Z0-9]/', '', $fleet); // Sanitize: only uppercase letters/numbers
   if ($fleet === '') $fleet = 'UNKNOWN';
 
   if ($action === 'create' && empty($sea_id)) {
@@ -174,7 +174,7 @@ try {
 
   $response = [
     'success' => true,
-    'message' => ($action === 'create' ? 'SEA created' : 'SEA updated') . ' successfully!' . (isset($pdfError) ? $pdfError : ''),
+    'message' => ($action === 'create' ? 'SEA created' : 'SEA updated') . ' successfully!' . $pdfError,
     'sea_id' => $sea['id'],
     'pdf' => base64_encode($pdfContent ?? ''),
     'pdf_name' => 'SEA-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $sea['id']) . '.pdf'
